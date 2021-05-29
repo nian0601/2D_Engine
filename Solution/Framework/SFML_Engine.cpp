@@ -13,9 +13,9 @@
 #include "imgui/imgui.h"
 #include "imgui/imgui-SFML.h"
 
-SFML_Engine::SFML_Engine(int aWidth, int aHeight)
+SFML_Engine::SFML_Engine(int aWidth, int aHeight, const char* aWindowTitle)
 {
-	myRenderWindow = new sf::RenderWindow(sf::VideoMode(aWidth, aHeight), "SFML Engine");
+	myRenderWindow = new sf::RenderWindow(sf::VideoMode(aWidth, aHeight), aWindowTitle);
 	SFML_Renderer::Init(myRenderWindow);
 	ImGui::SFML::Init(*myRenderWindow);
 	FW_Time::Init();
