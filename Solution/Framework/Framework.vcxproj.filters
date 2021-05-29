@@ -1,0 +1,194 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClInclude Include="SFML_Input.h">
+      <Filter>Core\SFML</Filter>
+    </ClInclude>
+    <ClInclude Include="SFML_Renderer.h">
+      <Filter>Core\SFML</Filter>
+    </ClInclude>
+    <ClInclude Include="SFML_Engine.h">
+      <Filter>Core\SFML</Filter>
+    </ClInclude>
+    <ClInclude Include="imgui\imconfig.h">
+      <Filter>ImGUI</Filter>
+    </ClInclude>
+    <ClInclude Include="imgui\imgui.h">
+      <Filter>ImGUI</Filter>
+    </ClInclude>
+    <ClInclude Include="imgui\imgui-SFML.h">
+      <Filter>ImGUI</Filter>
+    </ClInclude>
+    <ClInclude Include="imgui\imgui-SFML_export.h">
+      <Filter>ImGUI</Filter>
+    </ClInclude>
+    <ClInclude Include="imgui\imgui_internal.h">
+      <Filter>ImGUI</Filter>
+    </ClInclude>
+    <ClInclude Include="imgui\imstb_rectpack.h">
+      <Filter>ImGUI</Filter>
+    </ClInclude>
+    <ClInclude Include="imgui\imstb_textedit.h">
+      <Filter>ImGUI</Filter>
+    </ClInclude>
+    <ClInclude Include="imgui\imstb_truetype.h">
+      <Filter>ImGUI</Filter>
+    </ClInclude>
+    <ClInclude Include="FW_Math.h">
+      <Filter>Math</Filter>
+    </ClInclude>
+    <ClInclude Include="FW_Includes.h" />
+    <ClInclude Include="FW_Assert.h" />
+    <ClInclude Include="FW_FileParser.h">
+      <Filter>Utility\File</Filter>
+    </ClInclude>
+    <ClInclude Include="FW_FileProcessor.h">
+      <Filter>Utility\File</Filter>
+    </ClInclude>
+    <ClInclude Include="FW_FileSystem.h">
+      <Filter>Utility\File</Filter>
+    </ClInclude>
+    <ClInclude Include="FW_TypeID.h">
+      <Filter>ECS</Filter>
+    </ClInclude>
+    <ClInclude Include="FW_Rect.h">
+      <Filter>Math</Filter>
+    </ClInclude>
+    <ClInclude Include="FW_Vector2.h">
+      <Filter>Math</Filter>
+    </ClInclude>
+    <ClInclude Include="FW_ComponentStorage.h">
+      <Filter>ECS</Filter>
+    </ClInclude>
+    <ClInclude Include="FW_Components.h">
+      <Filter>ECS</Filter>
+    </ClInclude>
+    <ClInclude Include="FW_Time.h">
+      <Filter>Core</Filter>
+    </ClInclude>
+    <ClInclude Include="FW_Renderer.h">
+      <Filter>Core</Filter>
+    </ClInclude>
+    <ClInclude Include="FW_Input.h">
+      <Filter>Core</Filter>
+    </ClInclude>
+    <ClInclude Include="FW_IGame.h">
+      <Filter>Core</Filter>
+    </ClInclude>
+    <ClInclude Include="FW_Murmur.h">
+      <Filter>Utility</Filter>
+    </ClInclude>
+    <ClInclude Include="FW_GrowingArray.h">
+      <Filter>Utility\Datastructures</Filter>
+    </ClInclude>
+    <ClInclude Include="FW_String.h">
+      <Filter>Utility</Filter>
+    </ClInclude>
+    <ClInclude Include="FW_Editor.h">
+      <Filter>Core</Filter>
+    </ClInclude>
+    <ClInclude Include="FW_LevelLoader.h">
+      <Filter>Core</Filter>
+    </ClInclude>
+    <ClInclude Include="FW_MessageQueue.h">
+      <Filter>ECS</Filter>
+    </ClInclude>
+    <ClInclude Include="FW_EntityManager.h">
+      <Filter>ECS</Filter>
+    </ClInclude>
+    <ClInclude Include="FW_RenderSystem.h">
+      <Filter>ECS\Systems</Filter>
+    </ClInclude>
+    <ClInclude Include="FW_CollisionSystem.h">
+      <Filter>ECS\Systems</Filter>
+    </ClInclude>
+    <ClInclude Include="FW_Messages.h">
+      <Filter>ECS</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="SFML_Input.cpp">
+      <Filter>Core\SFML</Filter>
+    </ClCompile>
+    <ClCompile Include="SFML_Renderer.cpp">
+      <Filter>Core\SFML</Filter>
+    </ClCompile>
+    <ClCompile Include="SFML_Engine.cpp">
+      <Filter>Core\SFML</Filter>
+    </ClCompile>
+    <ClCompile Include="imgui\imgui.cpp">
+      <Filter>ImGUI</Filter>
+    </ClCompile>
+    <ClCompile Include="imgui\imgui_demo.cpp">
+      <Filter>ImGUI</Filter>
+    </ClCompile>
+    <ClCompile Include="imgui\imgui_draw.cpp">
+      <Filter>ImGUI</Filter>
+    </ClCompile>
+    <ClCompile Include="imgui\imgui_widgets.cpp">
+      <Filter>ImGUI</Filter>
+    </ClCompile>
+    <ClCompile Include="imgui\imgui-SFML.cpp">
+      <Filter>ImGUI</Filter>
+    </ClCompile>
+    <ClCompile Include="FW_FileParser.cpp">
+      <Filter>Utility\File</Filter>
+    </ClCompile>
+    <ClCompile Include="FW_FileProcessor.cpp">
+      <Filter>Utility\File</Filter>
+    </ClCompile>
+    <ClCompile Include="FW_FileSystem.cpp">
+      <Filter>Utility\File</Filter>
+    </ClCompile>
+    <ClCompile Include="FW_Time.cpp">
+      <Filter>Core</Filter>
+    </ClCompile>
+    <ClCompile Include="FW_Murmur.cpp">
+      <Filter>Utility</Filter>
+    </ClCompile>
+    <ClCompile Include="FW_Editor.cpp">
+      <Filter>Core</Filter>
+    </ClCompile>
+    <ClCompile Include="FW_LevelLoader.cpp">
+      <Filter>Core</Filter>
+    </ClCompile>
+    <ClCompile Include="FW_EntityManager.cpp">
+      <Filter>ECS</Filter>
+    </ClCompile>
+    <ClCompile Include="FW_RenderSystem.cpp">
+      <Filter>ECS\Systems</Filter>
+    </ClCompile>
+    <ClCompile Include="FW_CollisionSystem.cpp">
+      <Filter>ECS\Systems</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="Math">
+      <UniqueIdentifier>{6733eb1e-fe15-4f7e-88ec-70dbcf511f4e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="ImGUI">
+      <UniqueIdentifier>{1828e2fe-367a-465a-b878-e551eb4cb2ae}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="ECS">
+      <UniqueIdentifier>{bd053330-a0e1-458d-92df-0a0787df2585}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Core">
+      <UniqueIdentifier>{9caa0b69-0c98-4a53-a5f0-376e072c8782}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Core\SFML">
+      <UniqueIdentifier>{5a24abe2-3eed-47f1-b674-bade1c8dcd8f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Utility">
+      <UniqueIdentifier>{e82ee804-de69-4313-861e-77dddb055375}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Utility\File">
+      <UniqueIdentifier>{ed02703c-ef92-4c10-b19e-59ce385e8fba}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Utility\Datastructures">
+      <UniqueIdentifier>{f7320056-3637-459c-adeb-a1c8888d699f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="ECS\Systems">
+      <UniqueIdentifier>{822a2336-8e2c-420c-ac5b-93eb2e2996ac}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>
