@@ -2,6 +2,7 @@
 
 #include "SerializationHelper.h"
 #include "..\Framework\FW_TypeID.h"
+#include "..\Framework\FW_Vector2.h"
 
 // Are these really necessary? Is there a neater non-macro solution?
 #define SERIALIZE(aStream, aType) serialize(aType,aStream);
@@ -91,4 +92,21 @@ struct ColorNetworkMessage
 	}
 
 	int myColor;
+};
+
+struct PositionNetworkMessage
+{
+	void SerializeMessage(NetworkSerializationStreamType& aStream) const
+	{
+		SERIALIZE(aStream, myPosition.x);
+		SERIALIZE(aStream, myPosition.y);
+	}
+
+	void DeserializeMessage(NetworkSerializationStreamType& aStream)
+	{
+		DESERIALIZE(aStream, myPosition.x);
+		DESERIALIZE(aStream, myPosition.y);
+	}
+
+	Vector2f myPosition;
 };

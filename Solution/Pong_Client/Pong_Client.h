@@ -14,8 +14,10 @@ public:
 private:
 	void HandleConnectionMessage(const ConnectionNetworkMessage& aMessage, const sockaddr_in& aSenderAddress);
 	void HandleColorMessage(const ColorNetworkMessage& aMessage, const sockaddr_in& aSenderAddress);
+	void HandlePositionMessage(const PositionNetworkMessage& aMessage, const sockaddr_in& aSenderAddress);
 
 	ClientNetwork myNetwork;
 	bool myIsConnectedToServer;
 	int myColor;
+	Vector2f myPosition;
 };

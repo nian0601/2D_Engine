@@ -18,4 +18,6 @@ private:
 	bool myHasAConnectedClient;
 
 	std::vector<sockaddr_in> myConnectedClients;
+
+	Vector2f myPosition;
 };

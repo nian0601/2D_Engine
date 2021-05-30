@@ -56,6 +56,16 @@ namespace SFML_Input
 		case FW_Input::SPACE: return sf::Keyboard::Space;
 		case FW_Input::ESC: return sf::Keyboard::Escape;
 		case FW_Input::DEL: return sf::Keyboard::Delete;
+		case FW_Input::_1: return sf::Keyboard::Num1;
+		case FW_Input::_2: return sf::Keyboard::Num2;
+		case FW_Input::_3: return sf::Keyboard::Num3;
+		case FW_Input::_4: return sf::Keyboard::Num4;
+		case FW_Input::_5: return sf::Keyboard::Num5;
+		case FW_Input::_6: return sf::Keyboard::Num6;
+		case FW_Input::_7: return sf::Keyboard::Num7;
+		case FW_Input::_8: return sf::Keyboard::Num8;
+		case FW_Input::_9: return sf::Keyboard::Num9;
+		case FW_Input::_0: return sf::Keyboard::Num0;
 		default:
 			break;
 		}
