@@ -12,7 +12,10 @@ public:
 	bool Run() override;
 
 private:
+	void HandleConnectionMessage(const ConnectionNetworkMessage& aMessage, const sockaddr_in& aSenderAddress);
+	void HandleColorMessage(const ColorNetworkMessage& aMessage, const sockaddr_in& aSenderAddress);
+
 	ClientNetwork myNetwork;
-	std::vector<NetworkData> myNetworkData;
 	bool myIsConnectedToServer;
+	int myColor;
 };

@@ -4,26 +4,6 @@
 #include <ws2tcpip.h>
 #include <stdio.h>
 
-void ServerNetwork::SendNetworkMessage(const char* aMessage, int aSize, const sockaddr_in& aTargetAddress)
-{
-#if THREAD_MODE
-	NetworkData data;
-	memcpy(&data.myData, aMessage, aSize);
-	data.myLength = aSize;
-	data.myAddress = aTargetAddress;
-
-	ReadWriteLock lock(myOutgoingMutex);
-	myOutgoingNetworkDataBuffer.push_back(data);
-#else
-	int result = sendto(mySocket, aMessage, aSize, 0, (struct sockaddr*)&aTargetAddress, sizeof(aTargetAddress));
-	if (result == SOCKET_ERROR)
-	{
-		WSACleanup();
-		assert(true && "Failed to send message!");
-	}
-#endif
-}
-
 void ServerNetwork::OnStart()
 {
 	WSADATA WSAData;
@@ -44,7 +24,7 @@ void ServerNetwork::OnStart()
 	hints.ai_flags = AI_PASSIVE;
 
 	// Does it matter what number this is?
-	std::string portNumber = "445566";
+	std::string portNumber = "44556";
 
 	result = getaddrinfo(nullptr, portNumber.c_str(), &hints, &addrResult);
 	if (result != 0)

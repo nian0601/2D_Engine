@@ -40,19 +40,19 @@ void Network::Start()
 #endif
 }
 
-bool Network::RecieveMessages(std::vector<NetworkData>& someBuffers)
+void Network::ProcessMessages()
 {
-	someBuffers.clear();
+	myNetworkData.clear();
 
 #if THREAD_MODE
-	ReadWriteLock lock(myIncommingMutex);
+	{
+		ReadWriteLock lock(myIncommingMutex);
 
-	for (const NetworkData& data : myIncommingNetworkDataBuffer)
-		someBuffers.push_back(data);
+		for (const NetworkData& data : myIncommingNetworkDataBuffer)
+			myNetworkData.push_back(data);
 
-	myIncommingNetworkDataBuffer.clear();
-
-	return !someBuffers.empty();
+		myIncommingNetworkDataBuffer.clear();
+	}
 #else
 	int toReturn = 0;
 	int size = sizeof(sockaddr_in);
@@ -66,10 +66,40 @@ bool Network::RecieveMessages(std::vector<NetworkData>& someBuffers)
 	{
 		memcpy(&dataToAdd.myData, &buffer[0], toReturn * sizeof(char));
 		dataToAdd.myLength = toReturn;
-		someBuffers.push_back(dataToAdd);
+		myNetworkData.push_back(dataToAdd);
 	}
+#endif
 
-	return !someBuffers.empty();
+
+	if (!myNetworkData.empty())
+	{
+		for (NetworkData& networkData : myNetworkData)
+		{
+			NetworkSerializationStreamType messageStream;
+			int messageType = InitializeMessageStreamFromNetworkData(messageStream, networkData);
+
+			SendMessage(messageType, messageStream, networkData.myAddress);
+		}
+	}
+}
+
+void Network::SendNetworkMessageInternal(const NetworkSerializationStreamType& someData, const sockaddr_in& aTargetAddress)
+{
+#if THREAD_MODE
+	NetworkData data;
+	memcpy(&data.myData, &someData[0], someData.size());
+	data.myLength = someData.size();
+	data.myAddress = aTargetAddress;
+
+	ReadWriteLock lock(myOutgoingMutex);
+	myOutgoingNetworkDataBuffer.push_back(data);
+#else
+	int result = sendto(mySocket, &someData[0], someData.size(), 0, (struct sockaddr*)&aTargetAddress, sizeof(aTargetAddress));
+	if (result == SOCKET_ERROR)
+	{
+		WSACleanup();
+		assert(true && "Failed to send message!");
+	}
 #endif
 }
 

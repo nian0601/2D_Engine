@@ -5,8 +5,19 @@
 class ServerNetwork : public Network
 {
 public:
-	void SendNetworkMessage(const char* aMessage, int aSize, const sockaddr_in& aTargetAddress);
+	template<typename Message>
+	void SendNetworkMessage(const Message& aMessage, const sockaddr_in& aTargetAddress);
 
 protected:
 	void OnStart() override;
 };
+
+template <typename Message>
+void ServerNetwork::SendNetworkMessage(const Message& aMessage, const sockaddr_in& aTargetAddress)
+{
+	NetworkSerializationStreamType messageStream;
+	SerializeNetworkMessageHeader(GetNetworkMessageID<Message>(), messageStream);
+
+	aMessage.SerializeMessage(messageStream);
+	SendNetworkMessageInternal(messageStream, aTargetAddress);
+}
