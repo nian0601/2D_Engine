@@ -85,22 +85,20 @@ protected:
 	std::vector<NetworkData> myActiveOutgoingNetworkData;
 	// Data that is getting filled by the main program, will be synced over to the 'Active'-list at the start of each SendThread-execution
 	std::vector<NetworkData> myOutgoingNetworkDataBuffer;
-	Mutex myOutgoingMutex;
 
 	// Will be fed with data that is getting read from the network in the RecieveThread, gets copied over to the 'Buffer'-list at the end of each RecieveThread-execution
 	std::vector<NetworkData> myActiveIncommingNetworkData;
 	// Contains all the latest incomming networkdata to be consumed by the main program
 	std::vector<NetworkData> myIncommingNetworkDataBuffer;
-	Mutex myIncommingMutex;
 
 private:
 #if THREAD_MODE
-	void RecieveThreadFunction();
-	void SendThreadFunction();
+	void SendAndReceiveThreadFunction();
 
 	volatile bool myIsRunning;
-	std::thread* myRecieveThread;
-	std::thread* mySendThread;
+	std::thread* mySendAndReceiveThread;
+	Mutex mySendAndReceiveMutex;
+
 #endif
 
 	std::vector<NetworkData> myNetworkData;
