@@ -74,10 +74,10 @@ public:
 	template <typename MessageType>
 	int SubscribeToMessage(std::function<void(const MessageType&, const sockaddr_in&)>  aFunction);
 
+	void SendPackedNetworkMessage(const NetworkSerializationStreamType& someData, const sockaddr_in& aTargetAddress);
+
 protected:
 	virtual void OnStart() = 0;
-
-	void SendNetworkMessageInternal(const NetworkSerializationStreamType& someData, const sockaddr_in& aTargetAddress);
 
 	SOCKET mySocket;
 

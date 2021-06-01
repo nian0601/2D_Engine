@@ -65,6 +65,8 @@ void SFML_Engine::Run(FW_IGame& aGame)
 		FW_Renderer::Present();
 	}
 
+	aGame.OnShutdown();
+
 	SFML_Renderer::Shutdown();
 	delete myRenderWindow;
 }

@@ -3,7 +3,7 @@
 
 int main(int, char**)
 {
-	SFML_Engine engine(1280, 720, "Pong Client");
+	SFML_Engine engine(720, 640, "Pong Client");
 	Pong_Client pong;
 
 	engine.Run(pong);

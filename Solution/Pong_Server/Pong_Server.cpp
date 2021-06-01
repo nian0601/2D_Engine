@@ -6,77 +6,101 @@ Pong_Server::Pong_Server()
 {
 	myNetwork.Start();
 
-	myNetwork.RegisterMessageType<ConnectionNetworkMessage>();
-	myNetwork.RegisterMessageType<ColorNetworkMessage>();
-	myNetwork.RegisterMessageType<PositionNetworkMessage>();
+	myNetwork.RegisterMessageType<ClientConnectionRequestNetworkMessage>();
+	myNetwork.RegisterMessageType<ClientDisconnectionNetworkMessage>();
+	myNetwork.RegisterMessageType<ServerAcceptConnectionNetworkMessage>();
 
-	myNetwork.SubscribeToMessage<ConnectionNetworkMessage>(std::bind(&Pong_Server::HandleConnectionMessage, this, std::placeholders::_1, std::placeholders::_2));
+	myNetwork.RegisterMessageType<PlayerSyncNetworkMessage>();
 
-	myHasAConnectedClient = false;
-	myPosition = { 400.f, 400.f };
+	myNetwork.SubscribeToMessage<ClientConnectionRequestNetworkMessage>(std::bind(&Pong_Server::HandleClientConnectionRequest, this, std::placeholders::_1, std::placeholders::_2));
+	myNetwork.SubscribeToMessage<ClientDisconnectionNetworkMessage>(std::bind(&Pong_Server::HandleClientDisconnection, this, std::placeholders::_1, std::placeholders::_2));
+	myNetwork.SubscribeToMessage<PlayerSyncNetworkMessage>(std::bind(&Pong_Server::HandlePlayerSync, this, std::placeholders::_1, std::placeholders::_2));
+
+	myNextPlayerID = 0;
 }
 
 bool Pong_Server::Run()
 {
 	myNetwork.ProcessMessages();
 
-	if (FW_Input::WasKeyReleased(FW_Input::KeyCode::_1))
-		BroadcastColorMessage(0xFFFFFFFF);
-	if (FW_Input::WasKeyReleased(FW_Input::KeyCode::_2))
-		BroadcastColorMessage(0xFFFF0000);
-	if (FW_Input::WasKeyReleased(FW_Input::KeyCode::_3))
-		BroadcastColorMessage(0xFF00FF00);
-	if (FW_Input::WasKeyReleased(FW_Input::KeyCode::_4))
-		BroadcastColorMessage(0xFF0000FF);
-
-
-	const float aSpeed = 10.f;
-	float deltaTime = FW_Time::GetDelta();
-	if (FW_Input::IsKeyDown(FW_Input::KeyCode::W))
-		myPosition.y -= aSpeed * deltaTime;
-	if (FW_Input::IsKeyDown(FW_Input::KeyCode::S))
-		myPosition.y += aSpeed * deltaTime;
-	if (FW_Input::IsKeyDown(FW_Input::KeyCode::A))
-		myPosition.x -= aSpeed * deltaTime;
-	if (FW_Input::IsKeyDown(FW_Input::KeyCode::D))
-		myPosition.x += aSpeed * deltaTime;
-
-	if (myConnectedClients.size() > 0)
-	{
-		PositionNetworkMessage message;
-		message.myPosition = myPosition;
-
-		for (const sockaddr_in& client : myConnectedClients)
-			myNetwork.SendNetworkMessage(message, client);
-	}
-
 	return true;
 }
 
-void Pong_Server::HandleConnectionMessage(const ConnectionNetworkMessage& aMessage, const sockaddr_in& aSender)
+void Pong_Server::HandleClientConnectionRequest(const ClientConnectionRequestNetworkMessage& /*aMessage*/, const sockaddr_in& aSenderAddress)
 {
-	switch (aMessage.myConnectionType)
-	{
-	case ConnectionNetworkMessage::CLIENT_CONNECT_REQUEST:
-	{
-		myHasAConnectedClient = true;
+	Pong_Player newPlayer;
+	newPlayer.myID = myNextPlayerID++;
+	newPlayer.myAddress = aSenderAddress;
 
-		ConnectionNetworkMessage response;
-		response.myConnectionType = ConnectionNetworkMessage::SERVER_ACCEPT_CONNECT_REQUEST;
-		myNetwork.SendNetworkMessage(response, aSender);
+	if (myPlayers.size() == 0)
+	{
+		newPlayer.myPosition.x = 200.f;
+		newPlayer.myPosition.y = 200.f;
+	}
+	else
+	{
+		newPlayer.myPosition.x = 600.f;
+		newPlayer.myPosition.y = 200.f;
+	}
 
-		myConnectedClients.push_back(aSender);
-		break;
+	myNetwork.SendNetworkMessage(ServerAcceptConnectionNetworkMessage{ newPlayer.myID, newPlayer.myPosition }, newPlayer.myAddress);
+
+	PlayerSyncNetworkMessage newPlayerSync = { newPlayer.myID, newPlayer.myPosition };
+	NetworkSerializationStreamType packedNewPlayerMessage;
+	myNetwork.PackMessage(newPlayerSync, packedNewPlayerMessage);
+
+	for (const Pong_Player& remotePlayer : myPlayers)
+	{
+		// Sync the new player to the the remote player
+		myNetwork.SendPackedNetworkMessage(packedNewPlayerMessage, remotePlayer.myAddress);
+
+		// Sync the remote player to the new player
+		myNetwork.SendNetworkMessage(PlayerSyncNetworkMessage{ remotePlayer.myID, remotePlayer.myPosition }, newPlayer.myAddress);
 	}
-	}
+
+	myPlayers.push_back(newPlayer);
 }
 
-void Pong_Server::BroadcastColorMessage(int aColor)
+void Pong_Server::HandleClientDisconnection(const ClientDisconnectionNetworkMessage& aMessage, const sockaddr_in& /*aSenderAddress*/)
 {
-	ColorNetworkMessage response;
-	response.myColor = aColor;
+	for (unsigned int i = 0; i < myPlayers.size(); ++i)
+	{
+		if (myPlayers[i].myID == aMessage.myID)
+		{
+			myPlayers.erase(myPlayers.begin() + i);
+			break;
+		}
+	}
 
-	for (const sockaddr_in& client : myConnectedClients)
-		myNetwork.SendNetworkMessage(response, client);
+	ClientDisconnectionNetworkMessage message{ aMessage.myID };
+	NetworkSerializationStreamType packedMessage;
+	myNetwork.PackMessage(aMessage, packedMessage);
+
+	for (const Pong_Player& remotePlayer : myPlayers)
+		myNetwork.SendPackedNetworkMessage(packedMessage, remotePlayer.myAddress);
 }
 
+void Pong_Server::HandlePlayerSync(const PlayerSyncNetworkMessage& aMessage, const sockaddr_in& /*aSenderAddress*/)
+{
+	NetworkSerializationStreamType packedPlayerUpdate;
+
+	for (Pong_Player& player : myPlayers)
+	{
+		if (player.myID == aMessage.myID)
+		{
+			player.myPosition = aMessage.myPosition;
+
+			PlayerSyncNetworkMessage newPlayerSync = { player.myID, player.myPosition };
+			myNetwork.PackMessage(newPlayerSync, packedPlayerUpdate);
+			break;
+		}
+	}
+
+	for (const Pong_Player& player : myPlayers)
+	{
+		if (player.myID != aMessage.myID)
+		{
+			myNetwork.SendPackedNetworkMessage(packedPlayerUpdate, player.myAddress);
+		}
+	}
+}

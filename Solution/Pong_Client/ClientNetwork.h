@@ -21,6 +21,6 @@ void ClientNetwork::SendNetworkMessage(const Message& aMessage)
 	SerializeNetworkMessageHeader(GetNetworkMessageID<Message>(), messageStream);
 
 	aMessage.SerializeMessage(messageStream);
-	SendNetworkMessageInternal(messageStream, myServerAddress);
+	SendPackedNetworkMessage(messageStream, myServerAddress);
 }
 

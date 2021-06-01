@@ -3,6 +3,14 @@
 #include "FW_IGame.h"
 #include "ServerNetwork.h"
 
+struct Pong_Player
+{
+	int myID = 0;
+
+	Vector2f myPosition;
+	sockaddr_in myAddress;
+};
+
 class Pong_Server : public FW_IGame
 {
 public:
@@ -11,13 +19,12 @@ public:
 	bool Run() override;
 
 private:
-	void HandleConnectionMessage(const ConnectionNetworkMessage& aMessage, const sockaddr_in& aSender);
-	void BroadcastColorMessage(int aColor);
-
+	void HandleClientConnectionRequest(const ClientConnectionRequestNetworkMessage& aMessage, const sockaddr_in& aSenderAddress);
+	void HandleClientDisconnection(const ClientDisconnectionNetworkMessage& aMessage, const sockaddr_in& aSenderAddress);
+	void HandlePlayerSync(const PlayerSyncNetworkMessage& aMessage, const sockaddr_in& aSenderAddress);
+	
 	ServerNetwork myNetwork;
-	bool myHasAConnectedClient;
 
-	std::vector<sockaddr_in> myConnectedClients;
-
-	Vector2f myPosition;
+	int myNextPlayerID;
+	std::vector<Pong_Player> myPlayers;
 };

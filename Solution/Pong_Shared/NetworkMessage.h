@@ -56,57 +56,66 @@ int GetNetworkMessageID()
 	return FW_TypeID<BaseNetworkMessage>::GetID<Message>();
 }
 
-struct ConnectionNetworkMessage
+struct ClientConnectionRequestNetworkMessage
 {
-	enum MessageType
+	void SerializeMessage(NetworkSerializationStreamType& /*aStream*/) const {}
+	void DeserializeMessage(NetworkSerializationStreamType& /*aStream*/) {}
+};
+
+struct ClientDisconnectionNetworkMessage
+{
+	void SerializeMessage(NetworkSerializationStreamType& aStream) const 
 	{
-		CLIENT_CONNECT_REQUEST,
-		SERVER_ACCEPT_CONNECT_REQUEST,
-		SERVER_REJECT_CONNECT_REQUEST,
-		CLIENT_DISCONNECT,
+		SERIALIZE(aStream, myID);
+	}
+
+	void DeserializeMessage(NetworkSerializationStreamType& aStream) 
+	{
+		DESERIALIZE(aStream, myID);
+	}
+
+	int myID;
+};
+
+struct ServerAcceptConnectionNetworkMessage
+{
+	struct Player
+	{
+		int myID;
+		Vector2f myPosition;
 	};
 
 	void SerializeMessage(NetworkSerializationStreamType& aStream) const
 	{
-		SERIALIZE(aStream, myConnectionType);
+		SERIALIZE(aStream, myLocalPlayer.myID);
+		SERIALIZE(aStream, myLocalPlayer.myPosition.x);
+		SERIALIZE(aStream, myLocalPlayer.myPosition.y);
 	}
 
 	void DeserializeMessage(NetworkSerializationStreamType& aStream)
 	{
-		DESERIALIZE(aStream, myConnectionType);
+		DESERIALIZE(aStream, myLocalPlayer.myID);
+		DESERIALIZE(aStream, myLocalPlayer.myPosition.x);
+		DESERIALIZE(aStream, myLocalPlayer.myPosition.y);
 	}
 
-	int myConnectionType;
+	Player myLocalPlayer;
 };
 
-struct ColorNetworkMessage
+struct PlayerSyncNetworkMessage
 {
 	void SerializeMessage(NetworkSerializationStreamType& aStream) const
 	{
-		SERIALIZE(aStream, myColor);
+		SERIALIZE(aStream, myID);
+		SERIALIZE(aStream, myPosition);
 	}
 
 	void DeserializeMessage(NetworkSerializationStreamType& aStream)
 	{
-		DESERIALIZE(aStream, myColor);
+		DESERIALIZE(aStream, myID);
+		DESERIALIZE(aStream, myPosition);
 	}
 
-	int myColor;
-};
-
-struct PositionNetworkMessage
-{
-	void SerializeMessage(NetworkSerializationStreamType& aStream) const
-	{
-		SERIALIZE(aStream, myPosition.x);
-		SERIALIZE(aStream, myPosition.y);
-	}
-
-	void DeserializeMessage(NetworkSerializationStreamType& aStream)
-	{
-		DESERIALIZE(aStream, myPosition.x);
-		DESERIALIZE(aStream, myPosition.y);
-	}
-
+	int myID;
 	Vector2f myPosition;
 };

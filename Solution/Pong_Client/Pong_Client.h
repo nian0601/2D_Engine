@@ -4,20 +4,29 @@
 
 #include "ClientNetwork.h"
 
+struct Pong_Player
+{
+	int myID;
+	Vector2f myPosition;
+};
+
 class Pong_Client : public FW_IGame
 {
 public:
 	Pong_Client();
 
 	bool Run() override;
+	void OnShutdown() override;
 
 private:
-	void HandleConnectionMessage(const ConnectionNetworkMessage& aMessage, const sockaddr_in& aSenderAddress);
-	void HandleColorMessage(const ColorNetworkMessage& aMessage, const sockaddr_in& aSenderAddress);
-	void HandlePositionMessage(const PositionNetworkMessage& aMessage, const sockaddr_in& aSenderAddress);
+	void RenderPlayer(const Pong_Player& aPlayer, int aColor);
+
+	void HandleServerAcceptedConnection(const ServerAcceptConnectionNetworkMessage& aMessage, const sockaddr_in& aSenderAddress);
+	void HandleClientDisconnection(const ClientDisconnectionNetworkMessage& aMessage, const sockaddr_in& aSenderAddress);
+	void HandlePlayerSync(const PlayerSyncNetworkMessage& aMessage, const sockaddr_in& aSenderAddress);
 
 	ClientNetwork myNetwork;
-	bool myIsConnectedToServer;
-	int myColor;
-	Vector2f myPosition;
+
+	std::vector<Pong_Player> myRemotePlayers;
+	Pong_Player myLocalPlayer;
 };

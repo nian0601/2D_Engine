@@ -81,7 +81,7 @@ void Network::ProcessMessages()
 	}
 }
 
-void Network::SendNetworkMessageInternal(const NetworkSerializationStreamType& someData, const sockaddr_in& aTargetAddress)
+void Network::SendPackedNetworkMessage(const NetworkSerializationStreamType& someData, const sockaddr_in& aTargetAddress)
 {
 #if THREAD_MODE
 	NetworkData data;
