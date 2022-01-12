@@ -1,6 +1,8 @@
 #include "Pong_Server.h"
 #include "FW_Input.h"
 #include "FW_Time.h"
+#include "FW_String.h"
+#include "FW_Logger.h"
 
 Pong_Server::Pong_Server()
 {
@@ -9,98 +11,196 @@ Pong_Server::Pong_Server()
 	myNetwork.RegisterMessageType<ClientConnectionRequestNetworkMessage>();
 	myNetwork.RegisterMessageType<ClientDisconnectionNetworkMessage>();
 	myNetwork.RegisterMessageType<ServerAcceptConnectionNetworkMessage>();
+	myNetwork.RegisterMessageType<NewPlayerConnectedNetworkMessage>();
 
 	myNetwork.RegisterMessageType<PlayerSyncNetworkMessage>();
+	myNetwork.RegisterMessageType<FullSyncNetworkMessage>();
+	myNetwork.RegisterMessageType<ServerEntityNetworkMessage>();
 
 	myNetwork.SubscribeToMessage<ClientConnectionRequestNetworkMessage>(std::bind(&Pong_Server::HandleClientConnectionRequest, this, std::placeholders::_1, std::placeholders::_2));
 	myNetwork.SubscribeToMessage<ClientDisconnectionNetworkMessage>(std::bind(&Pong_Server::HandleClientDisconnection, this, std::placeholders::_1, std::placeholders::_2));
 	myNetwork.SubscribeToMessage<PlayerSyncNetworkMessage>(std::bind(&Pong_Server::HandlePlayerSync, this, std::placeholders::_1, std::placeholders::_2));
 
-	myNextPlayerID = 0;
+#if 1
+	// Client-size, Should be specified in some clever shared place in the future
+	// 720, 640
+	//StartExtraClientProcess(200, 400);
+	//StartExtraClientProcess(1200, 400);
+#endif
+
+	myElapsedTime = 0.f;
+	myFrameCount = 0;
+
+	myNextEntityID = 0;
+	Entity& ball = CreateNewEntity();
+	ball.myPosition = { 360.f, 320 };
+	ball.myVelocity = { 100.f, 50.f };
+	Normalize(ball.myVelocity);
+	ball.myVelocity *= 200.f;
+	myBallID = ball.myID;
 }
 
 bool Pong_Server::Run()
 {
+	if (FW_Input::WasKeyReleased(FW_Input::KeyCode::_F2))
+		StartExtraClientProcess();
+
 	myNetwork.ProcessMessages();
+
+	static float timeLimiter = 1.f / 10.f;
+	float deltaTime = FW_Time::GetDelta();
+
+	myElapsedTime += deltaTime;
+	if (myElapsedTime < timeLimiter)
+		return true;
+
+	for (Entity& entity : myEntities)
+	{
+		entity.myPosition += entity.myVelocity * myElapsedTime;
+
+		if (entity.myID == myBallID)
+		{
+			if (entity.myPosition.y <= 0 && entity.myVelocity.y < 0)
+				entity.myVelocity.y *= -1.f;
+			else if (entity.myPosition.y >= 640 && entity.myVelocity.y > 0)
+				entity.myVelocity.y *= -1.f;
+
+			if (entity.myPosition.x <= 0 && entity.myVelocity.x < 0)
+				entity.myVelocity.x *= -1.f;
+			if (entity.myPosition.x >= 720 && entity.myVelocity.x > 0)
+				entity.myVelocity.x *= -1.f;
+		}
+
+		ServerEntityNetworkMessage ballMessage = { myFrameCount, entity.myID, entity.myPosition, entity.myVelocity };
+		myNetwork.SendNetworkMessageToAllClients(ballMessage);
+	}
+
+	myElapsedTime = 0.f;
+	++myFrameCount;
 
 	return true;
 }
 
+void Pong_Server::OnShutdown()
+{
+	for (const PROCESS_INFORMATION& childProcess : myChildProcesses)
+	{
+		TerminateProcess(childProcess.hProcess, 0);
+		CloseHandle(childProcess.hProcess);
+		CloseHandle(childProcess.hThread);
+	}
+}
+
 void Pong_Server::HandleClientConnectionRequest(const ClientConnectionRequestNetworkMessage& /*aMessage*/, const sockaddr_in& aSenderAddress)
 {
-	Pong_Player newPlayer;
-	newPlayer.myID = myNextPlayerID++;
-	newPlayer.myAddress = aSenderAddress;
-
-	if (myPlayers.size() == 0)
+	Entity& playerEntity = CreateNewEntity();;
+	if (myClients.IsEmpty())
 	{
-		newPlayer.myPosition.x = 200.f;
-		newPlayer.myPosition.y = 200.f;
+		playerEntity.myPosition.x = 200.f;
+		playerEntity.myPosition.y = 200.f;
 	}
 	else
 	{
-		newPlayer.myPosition.x = 600.f;
-		newPlayer.myPosition.y = 200.f;
+		playerEntity.myPosition.x = 600.f;
+		playerEntity.myPosition.y = 200.f;
 	}
 
-	myNetwork.SendNetworkMessage(ServerAcceptConnectionNetworkMessage{ newPlayer.myID, newPlayer.myPosition }, newPlayer.myAddress);
+	ConnectedClient& client = myClients.Add();
+	client.myAddress = aSenderAddress;
+	client.myEntityID = playerEntity.myID;
 
-	PlayerSyncNetworkMessage newPlayerSync = { newPlayer.myID, newPlayer.myPosition };
-	NetworkSerializationStreamType packedNewPlayerMessage;
-	myNetwork.PackMessage(newPlayerSync, packedNewPlayerMessage);
 
-	for (const Pong_Player& remotePlayer : myPlayers)
-	{
-		// Sync the new player to the the remote player
-		myNetwork.SendPackedNetworkMessage(packedNewPlayerMessage, remotePlayer.myAddress);
+	// Tell the new player that the connection was accepted and give the client its ID
+	myNetwork.SendNetworkMessage(ServerAcceptConnectionNetworkMessage{ client.myEntityID }, client.myAddress);
 
-		// Sync the remote player to the new player
-		myNetwork.SendNetworkMessage(PlayerSyncNetworkMessage{ remotePlayer.myID, remotePlayer.myPosition }, newPlayer.myAddress);
-	}
+	// Then send the current state of the game to the player
+	FullSyncNetworkMessage newPlayerFullSync;
+	for (Entity& entity : myEntities)
+		newPlayerFullSync.myEntities.Add({ myFrameCount, entity.myID, entity.myPosition, entity.myVelocity });
 
-	myPlayers.push_back(newPlayer);
+	myNetwork.SendNetworkMessage(newPlayerFullSync, client.myAddress);
+
+	// Send the new player to all existing players
+	NewPlayerConnectedNetworkMessage newPlayerSync = { playerEntity.myID, playerEntity.myPosition };
+	myNetwork.SendNetworkMessageToAllClients(newPlayerSync);
+
+	// Finally add the new client to the lists so that its included in any future "server-wide" messages
+	myNetwork.AddClient(client.myEntityID, client.myAddress);
+
+	FW_Logger::AddMessage("Player Connected");
 }
 
 void Pong_Server::HandleClientDisconnection(const ClientDisconnectionNetworkMessage& aMessage, const sockaddr_in& /*aSenderAddress*/)
 {
-	for (unsigned int i = 0; i < myPlayers.size(); ++i)
+	for (int i = 0; i < myClients.Count(); ++i)
 	{
-		if (myPlayers[i].myID == aMessage.myID)
+		if (myClients[i].myEntityID == aMessage.myID)
 		{
-			myPlayers.erase(myPlayers.begin() + i);
+			myClients.RemoveCyclicAtIndex(i);
+			myNetwork.RemoveClient(aMessage.myID);
+
+			FW_Logger::AddMessage("Player Disconnected");
 			break;
 		}
 	}
 
 	ClientDisconnectionNetworkMessage message{ aMessage.myID };
-	NetworkSerializationStreamType packedMessage;
-	myNetwork.PackMessage(aMessage, packedMessage);
-
-	for (const Pong_Player& remotePlayer : myPlayers)
-		myNetwork.SendPackedNetworkMessage(packedMessage, remotePlayer.myAddress);
+	myNetwork.SendNetworkMessageToAllClients(message);
 }
 
 void Pong_Server::HandlePlayerSync(const PlayerSyncNetworkMessage& aMessage, const sockaddr_in& /*aSenderAddress*/)
 {
-	NetworkSerializationStreamType packedPlayerUpdate;
-
-	for (Pong_Player& player : myPlayers)
+	for (Entity& entity : myEntities)
 	{
-		if (player.myID == aMessage.myID)
+		if (entity.myID == aMessage.myID)
 		{
-			player.myPosition = aMessage.myPosition;
-
-			PlayerSyncNetworkMessage newPlayerSync = { player.myID, player.myPosition };
-			myNetwork.PackMessage(newPlayerSync, packedPlayerUpdate);
+			entity.myPosition = aMessage.myPosition;
+			entity.myVelocity = aMessage.myVelocity;
 			break;
 		}
 	}
+}
 
-	for (const Pong_Player& player : myPlayers)
+Entity& Pong_Server::CreateNewEntity()
+{
+	Entity& entity = myEntities.Add();
+	entity.myID = myNextEntityID++;
+	return entity;
+}
+
+void Pong_Server::StartExtraClientProcess(int aWindowX, int aWindowY)
+{
+	STARTUPINFO si;
+	PROCESS_INFORMATION pi;
+
+	ZeroMemory(&si, sizeof(si));
+	si.cb = sizeof(si);
+	ZeroMemory(&pi, sizeof(pi));
+
+	FW_String cmdArgs = " "; // Blankspace first as a dummy for the application-name
+	cmdArgs += aWindowX;
+	cmdArgs += " ";
+	cmdArgs += aWindowY;
+
+
+	// Start the child process. 
+	if (!CreateProcess("c://_GIT//2D_Engine//Pong_Client//Pong_Client.exe",   // No module name (use command line)
+		cmdArgs.GetRawBuffer(), // Command line
+		NULL,           // Process handle not inheritable
+		NULL,           // Thread handle not inheritable
+		FALSE,          // Set handle inheritance to FALSE
+		0,              // No creation flags
+		NULL,           // Use parent's environment block
+		NULL,           // Use parent's starting directory 
+		&si,            // Pointer to STARTUPINFO structure
+		&pi)           // Pointer to PROCESS_INFORMATION structure
+		)
 	{
-		if (player.myID != aMessage.myID)
-		{
-			myNetwork.SendPackedNetworkMessage(packedPlayerUpdate, player.myAddress);
-		}
+		printf("CreateProcess failed (%d).\n", GetLastError());
+	}
+	else
+	{
+		myChildProcesses.push_back(pi);
+		FW_Logger::AddMessage("New Client-process started");
 	}
 }

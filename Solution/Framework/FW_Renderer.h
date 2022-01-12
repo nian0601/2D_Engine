@@ -2,16 +2,18 @@
 
 #include "FW_Vector2.h"
 #include "FW_Rect.h"
+#include "FW_GrowingArray.h"
 
 namespace FW_Renderer
 {
 	struct Texture
 	{
 		Vector2i mySize;
-		int myTextureID;
+		int myTextureID = -1;
 	};
 
 	void Clear();
+	void FinishOffscreenBuffer();
 	void Present();
 
 	void RenderLine(const Vector2i& aStart, const Vector2i& aEnd, int aColor = 0xFFFFFFFF);
@@ -33,4 +35,8 @@ namespace FW_Renderer
 	Texture GetTexture(const char* aFilePath);
 	int GetScreenWidth();
 	int GetScreenHeight();
+	Texture CreateTexture(const Vector2i& aSize);
+	void DeleteTexture(const Texture& aTexture);
+	void UpdatePixelsInTexture(const Texture& aTexture, void* somePixels);
+	void SaveTextureToFile(const Texture& aTexture, const char* aFileName);
 }

@@ -54,3 +54,5 @@
 
 /Build
 Pong_Shared/Pong_Shared.lib
+*.ipdb
+*.iobj

@@ -3,6 +3,7 @@
 #include "PowerupSystem.h"
 #include "FW_EntityManager.h"
 #include "FW_Math.h"
+#include "FW_LevelLoader.h"
 
 namespace PowerupSystem
 {
@@ -28,7 +29,7 @@ namespace PowerupSystem
 
 			TranslationComponent* oldTranslation = aEntityManager.FindComponent<TranslationComponent>(ballComponent.myEntity);
 
-			FW_EntityID newBall = aEntityManager.CreateEntity("Data/Entities/ball.entity", oldTranslation->myPosition);
+			FW_EntityID newBall = FW_LevelLoader::AddEntity(aEntityManager, oldTranslation->myPosition, "ball");
 			createdBalls.Add(newBall);
 
 			MovementComponent* newMovement = aEntityManager.FindComponent<MovementComponent>(newBall);
@@ -45,9 +46,9 @@ namespace PowerupSystem
 
 		switch (powerupIndex)
 		{
-		case 0: return "Data/Entities/powerup_ball_speedup.entity";
-		case 1: return "Data/Entities/powerup_ball_speeddown.entity";
-		default: return "Data/Entities/powerup_ball_splitt.entity";
+		case 0: return "powerup_ball_speedup";
+		case 1: return "powerup_ball_speeddown";
+		default: return "powerup_ball_splitt";
 			break;
 		}
 	}
@@ -85,7 +86,7 @@ namespace PowerupSystem
 			if (random > 0.50)
 			{
 				TranslationComponent* translationToCopy = aEntityManager.FindComponent<TranslationComponent>(anEntityID);
-				aEntityManager.CreateEntity(GetRandomPowerup(), translationToCopy->myPosition);
+				FW_LevelLoader::AddEntity(aEntityManager, translationToCopy->myPosition, GetRandomPowerup());
 			}
 		}
 	}

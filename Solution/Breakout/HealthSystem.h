@@ -7,5 +7,5 @@ class FW_EntityManager;
 namespace HealthSystem
 {
 	void Run(FW_EntityManager& aEntityManager);
-	void OnCollision(FW_EntityManager& aEntityManager, const FW_CollisionMessage& aMessage);
+	void OnCollision(FW_EntityManager& aEntityManager, const FW_CollisionMessage& aMessage, int aDamageSoundEffectID);
 };

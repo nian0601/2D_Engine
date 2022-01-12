@@ -5,7 +5,10 @@
 class FW_EntityManager;
 namespace FW_LevelLoader
 {
-	static const char* ourLevelPath = "Data/Levels/";
+	static FW_String ourLevelPath = "Data/Levels/";
+	static FW_String ourEntityPath = "Data/Entities/";
+	void SetDataFolder(const char* aFolderName);
+	const char* GetLevelFolder();
 
 	void LoadLevel(FW_EntityManager& anEntityManager, const char* aLevelFileName);
 	void SaveLevel(FW_EntityManager& anEntityManager, const char* aLevelFileName);

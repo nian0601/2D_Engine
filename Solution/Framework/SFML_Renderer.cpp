@@ -7,6 +7,7 @@
 #include <SFML/Graphics/Text.hpp>
 #include <SFML/Graphics/Color.hpp>
 #include <SFML/Graphics/RectangleShape.hpp>
+#include "SFML/Graphics/RenderTexture.hpp"
 
 #include <assert.h>
 #include <windows.h>
@@ -15,6 +16,7 @@
 namespace SFML_Renderer
 {
 	static sf::RenderWindow* ourRenderWindow = nullptr;
+	static sf::RenderTexture* ourOffscreenBuffer = nullptr;
 	static sf::Font* ourFont;
 	static sf::RectangleShape ourRectangleShape;
 	static Vector2f ourCurrentRectangleSize;
@@ -22,21 +24,21 @@ namespace SFML_Renderer
 
 	struct CachedTexture
 	{
-		sf::Texture mySFMLTexture;
+		sf::Texture* mySFMLTexture;
 		std::string myFileName;
 		FW_Renderer::Texture myRendererTexture;
 	};
 	static int ourFreeTextureID = 0;
-	static std::vector<CachedTexture> ourCachedTextures;
+	static FW_GrowingArray<CachedTexture> ourCachedTextures;
 
 	static std::string ourAssetPath;
 
-	const sf::Texture* GetSFMLTexture(int aTextureID)
+	sf::Texture* GetSFMLTexture(int aTextureID)
 	{
-		for (const CachedTexture& cachedTexture : ourCachedTextures)
+		for (CachedTexture& cachedTexture : ourCachedTextures)
 		{
 			if (cachedTexture.myRendererTexture.myTextureID == aTextureID)
-				return &cachedTexture.mySFMLTexture;
+				return cachedTexture.mySFMLTexture;
 		}
 
 		assert(false && "Failed to find cached SDL_Texture");
@@ -58,15 +60,38 @@ namespace SFML_Renderer
 		}
 	}
 
+	void ResizeOffscreenBuffer(int aWidth, float anAspectRatio)
+	{
+		delete ourOffscreenBuffer;
+		ourOffscreenBuffer = new sf::RenderTexture();
+		ourOffscreenBuffer->create(aWidth, static_cast<int>(aWidth/ anAspectRatio));
+	}
+
 	void Init(sf::RenderWindow* aRenderWindow)
 	{
 		ourRenderWindow = aRenderWindow;
 
+		ResizeOffscreenBuffer(400, 16.f / 9.f);
+	}
+
+	void Shutdown()
+	{
+		for (CachedTexture& cachedTexture : ourCachedTextures)
+			delete cachedTexture.mySFMLTexture;
+		ourCachedTextures.RemoveAll();
+
+		delete ourFont;
+	}
+
+	void SetDataFolder(const char* aFolderName)
+	{
 		char fileBuffer[128];
 		assert(GetModuleFileNameA(NULL, fileBuffer, 128) != 0 && "Failed to get Executable path");
 		ourAssetPath.append(fileBuffer);
 		ourAssetPath.erase(ourAssetPath.rfind("\\"), std::string::npos);
 		ReplaceAllOccurancesInString(ourAssetPath, "\\", "/");
+		ourAssetPath.append("/");
+		ourAssetPath.append(aFolderName);
 		ourAssetPath.append("/Data/");
 
 		std::string fontPath = ourAssetPath;
@@ -77,10 +102,9 @@ namespace SFML_Renderer
 			assert(false && "Failed to load font");
 	}
 
-	void Shutdown()
+	const sf::Texture& GetOffscreenBuffer()
 	{
-		ourCachedTextures.clear();
-		delete ourFont;
+		return ourOffscreenBuffer->getTexture();
 	}
 
 	sf::Color GetSFMLColor(int aHexColor)
@@ -98,7 +122,13 @@ namespace FW_Renderer
 {
 	void Clear()
 	{
+		SFML_Renderer::ourOffscreenBuffer->clear();
 		SFML_Renderer::ourRenderWindow->clear();
+	}
+
+	void FinishOffscreenBuffer()
+	{
+		SFML_Renderer::ourOffscreenBuffer->display();
 	}
 
 	void Present()
@@ -115,7 +145,7 @@ namespace FW_Renderer
 		line[1].position = { float(aEnd.x), float(aEnd.y) };
 		line[1].color = SFML_Renderer::GetSFMLColor(aColor);
 ;
-		SFML_Renderer::ourRenderWindow->draw(line);
+		SFML_Renderer::ourOffscreenBuffer->draw(line);
 	}
 
 	void RenderRect(const Rectf& aRect, int aColor)
@@ -132,7 +162,7 @@ namespace FW_Renderer
 		rect.setFillColor(SFML_Renderer::GetSFMLColor(aColor));
 		rect.setTexture(nullptr);
 
-		SFML_Renderer::ourRenderWindow->draw(rect);
+		SFML_Renderer::ourOffscreenBuffer->draw(rect);
 	}
 
 	void RenderTexture(const Texture& aTexture, const Vector2i& aPos)
@@ -142,7 +172,7 @@ namespace FW_Renderer
 			sf::Sprite sprite;
 			sprite.setTexture(*texture);
 			sprite.setPosition({ float(aPos.x), float(aPos.y) });
-			SFML_Renderer::ourRenderWindow->draw(sprite);
+			SFML_Renderer::ourOffscreenBuffer->draw(sprite);
 		}
 	}
 
@@ -160,9 +190,8 @@ namespace FW_Renderer
 			textRect.width = aTextureRect.myExtents.x;
 			textRect.height = aTextureRect.myExtents.y;
 
-			
 			sprite.setTextureRect(textRect);
-			SFML_Renderer::ourRenderWindow->draw(sprite);
+			SFML_Renderer::ourOffscreenBuffer->draw(sprite);
 		}
 	}
 	void RenderTexture(int aTextureID, const Vector2i& aPos, const Vector2i& aSize, const Recti& aTextureRect)
@@ -198,7 +227,7 @@ namespace FW_Renderer
 				SFML_Renderer::ourCurrentTextureRect = textRect;
 				rect.setTextureRect(textRect);
 			}
-			SFML_Renderer::ourRenderWindow->draw(rect);
+			SFML_Renderer::ourOffscreenBuffer->draw(rect);
 		}
 	}
 
@@ -222,7 +251,7 @@ namespace FW_Renderer
 		}
 
 		text.setPosition({ float(pos.x) , float(pos.y) });
-		SFML_Renderer::ourRenderWindow->draw(text);
+		SFML_Renderer::ourOffscreenBuffer->draw(text);
 	}
 	void RenderFloat(float aFloat, const Vector2i& aPos, int aColor)
 	{
@@ -242,22 +271,24 @@ namespace FW_Renderer
 		std::string fullPath = SFML_Renderer::ourAssetPath;
 		fullPath.append(aFilePath);
 
-		sf::Texture texture;
-		if (!texture.loadFromFile(fullPath))
+		sf::Texture* texture = new sf::Texture();
+		if (!texture->loadFromFile(fullPath))
+		{
+			delete texture;
 			assert(false && "Failed to load texture.");
+		}
 
-		sf::Vector2u size = texture.getSize();
+		sf::Vector2u size = texture->getSize();
 
 		Texture result;
 		result.myTextureID = SFML_Renderer::ourFreeTextureID++;
 		result.mySize.x = size.x;
 		result.mySize.y = size.y;
 
-		SFML_Renderer::CachedTexture cachedTexture;
+		SFML_Renderer::CachedTexture& cachedTexture = SFML_Renderer::ourCachedTextures.Add();
 		cachedTexture.mySFMLTexture = texture;
 		cachedTexture.myRendererTexture = result;
 		cachedTexture.myFileName = aFilePath;
-		SFML_Renderer::ourCachedTextures.push_back(cachedTexture);
 
 		return result;
 	}
@@ -271,5 +302,43 @@ namespace FW_Renderer
 	{
 		sf::Vector2u size = SFML_Renderer::ourRenderWindow->getSize();
 		return size.y;
+	}
+
+	Texture CreateTexture(const Vector2i& aSize)
+	{
+		SFML_Renderer::CachedTexture& newTexture = SFML_Renderer::ourCachedTextures.Add();
+		newTexture.mySFMLTexture = new sf::Texture();
+		newTexture.mySFMLTexture->create(aSize.x, aSize.y);
+		newTexture.myFileName = "Code-created";
+		newTexture.myRendererTexture.myTextureID = SFML_Renderer::ourFreeTextureID++;
+		newTexture.myRendererTexture.mySize = aSize;
+
+		return newTexture.myRendererTexture;
+	}
+
+	void DeleteTexture(const Texture& aTexture)
+	{
+		for (int i = 0; i < SFML_Renderer::ourCachedTextures.Count(); ++i)
+		{
+			SFML_Renderer::CachedTexture& cachedTexture = SFML_Renderer::ourCachedTextures[i];
+			if (cachedTexture.myRendererTexture.myTextureID == aTexture.myTextureID)
+			{
+				delete cachedTexture.mySFMLTexture;
+				SFML_Renderer::ourCachedTextures.RemoveCyclicAtIndex(i);
+				return;
+			}
+		}
+	}
+
+	void UpdatePixelsInTexture(const Texture& aTexture, void* somePixels)
+	{
+		if (sf::Texture* texture = SFML_Renderer::GetSFMLTexture(aTexture.myTextureID))
+			texture->update(static_cast<unsigned char*>(somePixels));
+	}
+
+	void SaveTextureToFile(const Texture& aTexture, const char* aFileName)
+	{
+		if (sf::Texture* texture = SFML_Renderer::GetSFMLTexture(aTexture.myTextureID))
+			texture->copyToImage().saveToFile(aFileName);
 	}
 }

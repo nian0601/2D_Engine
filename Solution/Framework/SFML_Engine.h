@@ -11,6 +11,10 @@ public:
 	SFML_Engine(int aWidth, int aHeight, const char* aWindowTitle = "SFML Engine");
 	void Run(FW_IGame& aGame);
 
+	void SetWindowPosition(int aX, int aY);
+
 private:
+	void BuildImGUIStuff(FW_IGame& aGame);
+
 	sf::RenderWindow* myRenderWindow;
 };

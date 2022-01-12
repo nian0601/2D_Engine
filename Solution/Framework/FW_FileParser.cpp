@@ -30,14 +30,14 @@ void FW_FileParser::TrimBeginAndEnd(FW_String& aLine) const
 	while (aLine[begin] == ' ' || aLine[begin] == '\t' || aLine[begin] == '\n')
 		++begin;
 
-	int end = aLine.Lenght();
+	int end = aLine.Length();
 	if (end > begin)
 	{
 		while (aLine[end] == ' ' || aLine[end] == '\t' || aLine[end] == '\n')
 			--end;
 	}
 
-	if (begin != 0 || end != aLine.Lenght())
+	if (begin != 0 || end != aLine.Length())
 		aLine = aLine.SubStr(begin, end);
 }
 
@@ -61,7 +61,7 @@ void FW_FileParser::SplitLine(const FW_String& aLine, FW_GrowingArray<FW_String>
 		end = aLine.Find(" ", begin);
 	}
 
-	outWords.Add(aLine.SubStr(begin, aLine.Lenght()));
+	outWords.Add(aLine.SubStr(begin, aLine.Length()));
 }
 
 void FW_FileParser::SplitWord(const FW_String& aLine, const char* aSeperator, FW_GrowingArray<FW_String>& outWords) const
@@ -84,7 +84,7 @@ void FW_FileParser::SplitWord(const FW_String& aLine, const char* aSeperator, FW
 		end = aLine.Find(aSeperator, begin);
 	}
 
-	outWords.Add(aLine.SubStr(begin, aLine.Lenght()));
+	outWords.Add(aLine.SubStr(begin, aLine.Length()));
 }
 
 float FW_FileParser::GetFloat(const FW_String& aWord) const

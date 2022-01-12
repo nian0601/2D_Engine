@@ -28,7 +28,7 @@ void FW_FileProcessor::Process(FW_String& aString)
 
 	if (IsWriting())
 	{
-		int stringLenght = aString.Lenght() + 2;
+		int stringLenght = aString.Length() + 2;
 		fwrite(&stringLenght, sizeof(int), 1, myFile);
 		if (ferror(myFile))
 		{
@@ -70,7 +70,7 @@ void FW_FileProcessor::Process(const FW_String& aString)
 	FW_ASSERT(IsOpen() == true && "Tried to process an unopened file");
 	FW_ASSERT(IsWriting(), "Tried to read from disc into a const string");
 
-	int stringLenght = aString.Lenght() + 2;
+	int stringLenght = aString.Length() + 2;
 	fwrite(&stringLenght, sizeof(int), 1, myFile);
 	if (ferror(myFile))
 	{

@@ -42,8 +42,9 @@ public:
 
 	FW_String SubStr(const int aStart, const int aEnd) const;
 	const char* GetBuffer() const;
+	char* GetRawBuffer();
 
-	int Lenght() const;
+	int Length() const;
 	bool Empty() const;
 
 	const char& operator[](const int aIndex) const;
@@ -108,11 +109,11 @@ inline FW_String& FW_String::operator+=(const FW_String &aString)
 {
 #ifdef FW_STRING_ASSERTS
 	FW_ASSERT(myCurrentSize < myMaxSize, "[String] Tried to add a String to an already full string.")
-	FW_ASSERT(myCurrentSize + aString.Lenght() < myMaxSize, "[String]: Tried to add to an string that would result in an overflow.");
+	FW_ASSERT(myCurrentSize + aString.Length() < myMaxSize, "[String]: Tried to add to an string that would result in an overflow.");
 #endif
 
-	if (myCurrentSize + aString.Lenght() + 1 >= myMaxSize)
-		Resize(myCurrentSize + aString.Lenght() + 1);
+	if (myCurrentSize + aString.Length() + 1 >= myMaxSize)
+		Resize(myCurrentSize + aString.Length() + 1);
 
 	for (int i = 0; i < aString.myCurrentSize; ++i)
 	{
@@ -219,7 +220,7 @@ inline bool FW_String::operator==(const FW_String &aString) const
 
 inline void FW_String::operator=(const FW_String &aString)
 {
-	int targetLenght = aString.Lenght();
+	int targetLenght = aString.Length();
 	if (myMaxSize <= targetLenght + 1)
 		Resize(targetLenght + 1);
 
@@ -379,7 +380,7 @@ inline FW_String FW_String::SubStr(const int aStart, const int aEnd) const
 #ifdef FW_STRING_ASSERTS
 	FW_ASSERT(aStart < myMaxSize, "[String]: Tried to create a SubString starting at an Index greater than the lenght of the main-string.");
 	FW_ASSERT(aStart >= 0, "[String]: Tried to create a SubString starting at an Index greater than the lenght of the main-string.");
-	FW_ASSERT(aEnd <= Lenght(), "[String]: Tried to create a SubString thats longer than the main-string.");
+	FW_ASSERT(aEnd <= Length(), "[String]: Tried to create a SubString thats longer than the main-string.");
 #endif
 
 	FW_String newString;
@@ -402,7 +403,12 @@ inline const char* FW_String::GetBuffer() const
 	return myData;
 }
 
-inline int FW_String::Lenght() const
+inline char* FW_String::GetRawBuffer()
+{
+	return myData;
+}
+
+inline int FW_String::Length() const
 {
 	return myCurrentSize - 1;
 }

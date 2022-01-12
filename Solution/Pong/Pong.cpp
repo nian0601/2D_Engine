@@ -2,11 +2,22 @@
 
 #include "Pong.h"
 
-Pong::Pong()
-	: myLeftPlayer(true)
-	, myRightPlayer(false)
-	, myGameState(NEW_ROUND)
+void Pong::OnStartup()
 {
+	myLeftPlayer = new Paddle(true);
+	myRightPlayer = new Paddle(false);
+	myBall = new Ball();
+	myScore = new Score();
+
+	myGameState = NEW_ROUND;
+}
+
+void Pong::OnShutdown()
+{
+	delete myLeftPlayer;
+	delete myRightPlayer;
+	delete myBall;
+	delete myScore;
 }
 
 bool Pong::Run()
@@ -30,10 +41,10 @@ bool Pong::Run()
 		break;
 	}
 
-	myLeftPlayer.Render();
-	myRightPlayer.Render();
-	myBall.Render();
-	myScore.Render();
+	myLeftPlayer->Render();
+	myRightPlayer->Render();
+	myBall->Render();
+	myScore->Render();
 	return true;
 }
 
@@ -45,21 +56,21 @@ void Pong::UpdateNewRound()
 
 void Pong::UpdateRunning(float aDelta)
 {
-	myLeftPlayer.Update(aDelta);
-	myRightPlayer.Update(aDelta);
-	myBall.Update(aDelta);
+	myLeftPlayer->Update(aDelta);
+	myRightPlayer->Update(aDelta);
+	myBall->Update(aDelta);
 
-	if (myRightPlayer.CheckCollision(myBall) || myLeftPlayer.CheckCollision(myBall))
-		myBall.BounceX();
+	if (myRightPlayer->CheckCollision(*myBall) || myLeftPlayer->CheckCollision(*myBall))
+		myBall->BounceX();
 
-	bool leftPlayerScored = myBall.HasPassed(myRightPlayer);
-	bool rightPlayerScored = myBall.HasPassed(myLeftPlayer);
+	bool leftPlayerScored = myBall->HasPassed(myRightPlayer);
+	bool rightPlayerScored = myBall->HasPassed(myLeftPlayer);
 	if (leftPlayerScored || rightPlayerScored)
 	{
 		if (leftPlayerScored)
-			myScore.AddLeftPlayerScore();
+			myScore->AddLeftPlayerScore();
 		else
-			myScore.AddRightPlayerScore();
+			myScore->AddRightPlayerScore();
 
 		myGameState = SOMEONE_SCORED;
 	}
@@ -67,7 +78,7 @@ void Pong::UpdateRunning(float aDelta)
 
 void Pong::UpdateSomeoneScored()
 {
-	if (myScore.GameIsOver())
+	if (myScore->GameIsOver())
 	{
 		myGameState = GAME_OVER;
 	}
@@ -81,15 +92,15 @@ void Pong::UpdateGameOver()
 {
 	if (FW_Input::WasKeyReleased(FW_Input::KeyCode::SPACE))
 	{
-		myScore.Reset();
+		myScore->Reset();
 		StartNewRound();
 	}
 }
 
 void Pong::StartNewRound()
 {
-	myLeftPlayer.ResetPosition();
-	myRightPlayer.ResetPosition();
-	myBall.ResetPosition();
+	myLeftPlayer->ResetPosition();
+	myRightPlayer->ResetPosition();
+	myBall->ResetPosition();
 	myGameState = NEW_ROUND;
 }

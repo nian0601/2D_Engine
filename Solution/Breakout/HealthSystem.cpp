@@ -2,6 +2,7 @@
 
 #include "HealthSystem.h"
 #include "FW_EntityManager.h"
+#include "FW_AudioSystem.h"
 
 namespace HealthSystem
 {
@@ -15,9 +16,12 @@ namespace HealthSystem
 		}
 	}
 
-	void OnCollision(FW_EntityManager& aEntityManager, const FW_CollisionMessage& aMessage)
+	void OnCollision(FW_EntityManager& aEntityManager, const FW_CollisionMessage& aMessage, int aDamageSoundEffectID)
 	{
 		if (HealthComponent* health = aEntityManager.FindComponent<HealthComponent>(aMessage.myEntity))
+		{
 			health->myHealth -= 1;
+			FW_AudioSystem::PlayClip(aDamageSoundEffectID);
+		}
 	}
 }

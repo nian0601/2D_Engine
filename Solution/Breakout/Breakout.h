@@ -1,14 +1,20 @@
 #pragma once
-
+#include "FW_Includes.h"
 #include "FW_IGame.h"
 
+#include "Components.h"
+#include "Messages.h"
+
 class FW_EntityManager;
-class Game : public FW_IGame
+class Breakout : public FW_IGame
 {
 public:
-	Game();
+	void OnStartup() override;
 	bool Run() override;
 	void RunEditorLogic() override;
+	void BuildGameImguiEditor(unsigned int aGameOffscreenBufferTextureID) override;
+	const char* GetGameName() override { return "Breakout"; }
+	const char* GetDataFolderName() override { return "Breakout"; }
 
 private:
 	void StartLevel();
@@ -40,6 +46,8 @@ private:
 	int myRemainingLives;
 	Vector2i myTextPosition;
 
+	int myDamageSoundEffectID = -1;
+
 	FW_EntityManager* myEntityManager;
 	Rectf myGameArea;
 
@@ -49,4 +57,7 @@ private:
 	FW_GrowingArray<Rectf> myEditorGrid;
 	bool myShowGrid = false;
 	bool myIsInEditorMode = false;
+	bool myDebugDrawCollision = false;
+	bool myDebugDrawGameArea = false;
+	bool myShowDemoWindow = false;
 };

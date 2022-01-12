@@ -1,5 +1,6 @@
 #pragma once
 #include "assert.h"
+#include <cstring>
 
 enum eGrowingArray_Errors
 {
@@ -36,10 +37,7 @@ public:
 
 	inline void Add(const ObjectType& aObject);
 	inline ObjectType& Add();
-	inline void AddEmptyObject();
 	inline bool AddUnique(const ObjectType& aObject);
-	inline void Insert(int aIndex, const ObjectType& aObject);
-	inline void InsertFirst(const ObjectType& aObject);
 	inline void DeleteCyclic(ObjectType& aObject);
 	inline void DeleteCyclicAtIndex(int aItemNumber);
 	inline void DeleteNonCyclicAtIndex(int aItemNumber);
@@ -67,6 +65,7 @@ public:
 	bool IsEmpty() const;
 
 	inline ObjectType* GetArrayAsPointer();
+	inline const ObjectType* GetArrayAsPointer() const;
 
 	typedef ObjectType* iterator;
 	typedef const ObjectType* const_iterator;
@@ -91,7 +90,7 @@ inline FW_GrowingArray<ObjectType>::FW_GrowingArray()
 	, myMaxSize(0)
 	, myUseSafeModeFlag(true)
 {
-	Respace(1);
+	//Respace(1);
 }
 
 template<typename ObjectType>
@@ -192,10 +191,12 @@ inline const ObjectType& FW_GrowingArray<ObjectType>::operator[](const int& aInd
 template<typename ObjectType>
 inline void FW_GrowingArray<ObjectType>::Add(const ObjectType& aObject)
 {
+	if (myMaxSize == 0)
+		Respace(8);
+
 	if (myCurrentSize >= myMaxSize)
-	{
 		Respace(myMaxSize * 2);
-	}
+
 	myData[myCurrentSize++] = aObject;
 }
 
@@ -203,25 +204,14 @@ inline void FW_GrowingArray<ObjectType>::Add(const ObjectType& aObject)
 template<typename ObjectType>
 inline ObjectType& FW_GrowingArray<ObjectType>::Add()
 {
+	if (myMaxSize == 0)
+		Respace(8);
+
 	if (myCurrentSize >= myMaxSize)
-	{
 		Respace(myMaxSize * 2);
-	}
 
 	ObjectType& object = myData[myCurrentSize++];
 	return object;
-}
-
-
-template<typename ObjectType>
-inline void FW_GrowingArray<ObjectType>::AddEmptyObject()
-{
-	if (myCurrentSize == myMaxSize)
-	{
-		Respace(myMaxSize * 2);
-	}
-
-	myCurrentSize++;
 }
 
 template<typename ObjectType>
@@ -234,43 +224,6 @@ inline bool FW_GrowingArray<ObjectType>::AddUnique(const ObjectType& aObject)
 	}
 
 	return false;
-}
-
-template<typename ObjectType>
-inline void FW_GrowingArray<ObjectType>::Insert(int aIndex, const ObjectType& aObject)
-{
-#ifdef CE_ARRAY_BOUNDS_CHECK
-	CE_ASSERT(aIndex >= 0, locGrowingArray_ErrorStrings[LOW_INDEX]);
-	CE_ASSERT(aIndex < myCurrentSize, locGrowingArray_ErrorStrings[HIGH_INDEX]);
-#endif
-
-	if (myCurrentSize >= myMaxSize)
-	{
-		Respace(myMaxSize * 2);
-	}
-	for (int i = myCurrentSize - 1; i >= aIndex; --i)
-	{
-		if (i == int(-1))
-		{
-			break;
-		}
-		myData[i + 1] = myData[i];
-	}
-	myData[aIndex] = aObject;
-	++myCurrentSize;
-}
-
-template<typename ObjectType>
-inline void FW_GrowingArray<ObjectType>::InsertFirst(const ObjectType& aObject)
-{
-	if (myCurrentSize == 0)
-	{
-		Add(aObject);
-	}
-	else
-	{
-		Insert(0, aObject);
-	}
 }
 
 template<typename ObjectType>
@@ -354,7 +307,6 @@ inline void FW_GrowingArray<ObjectType>::RemoveNonCyclic(const ObjectType& aObje
 		}
 	}
 }
-
 
 template<typename ObjectType>
 inline void FW_GrowingArray<ObjectType>::RemoveNonCyclicAtIndex(int aItemNumber)
@@ -458,6 +410,12 @@ bool FW_GrowingArray<ObjectType>::IsEmpty() const
 
 template<typename ObjectType>
 inline ObjectType* FW_GrowingArray<ObjectType>::GetArrayAsPointer()
+{
+	return myData;
+}
+
+template<typename ObjectType>
+inline const ObjectType* FW_GrowingArray<ObjectType>::GetArrayAsPointer() const
 {
 	return myData;
 }

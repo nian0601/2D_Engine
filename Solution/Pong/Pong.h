@@ -9,9 +9,12 @@
 class Pong : public FW_IGame
 {
 public:
-	Pong();
-
+	void OnStartup() override;
+	void OnShutdown() override;
 	bool Run() override;
+
+	const char* GetGameName() override { return "Pong"; }
+	const char* GetDataFolderName() override { return "Pong"; }
 
 private:
 	enum GameState
@@ -29,10 +32,10 @@ private:
 
 	void StartNewRound();
 
-	Paddle myLeftPlayer;
-	Paddle myRightPlayer;
-	Ball myBall;
-	Score myScore;
+	Paddle* myLeftPlayer;
+	Paddle* myRightPlayer;
+	Ball* myBall;
+	Score* myScore;
 
 	GameState myGameState;
 };

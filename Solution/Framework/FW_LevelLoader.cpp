@@ -5,6 +5,15 @@
 
 namespace FW_LevelLoader
 {
+	void SetDataFolder(const char* aFolderName)
+	{
+		ourLevelPath = aFolderName;
+		ourLevelPath += "/Data/Levels/";
+
+		ourEntityPath = aFolderName;
+		ourEntityPath += "/Data/Entities/";
+	}
+
 	void LoadLevel(FW_EntityManager& anEntityManager, const char* aLevelFileName)
 	{
 		FW_String filePath = ourLevelPath;
@@ -28,7 +37,7 @@ namespace FW_LevelLoader
 				processor.Process(entityFileName);
 				processor.Process(position);
 
-				FW_String entityPath = "Data/Entities/";
+				FW_String entityPath = ourEntityPath;
 				entityPath += entityFileName;
 
 				anEntityManager.CreateEntity(entityPath.GetBuffer(), position);
@@ -79,7 +88,7 @@ namespace FW_LevelLoader
 
 	FW_EntityID AddEntity(FW_EntityManager& anEntityManager, const Vector2f& aPosition, const char* aEntityFileName)
 	{
-		FW_String filePath = "Data/Entities/";
+		FW_String filePath = ourEntityPath;
 		filePath += aEntityFileName;
 		filePath += ".entity";
 

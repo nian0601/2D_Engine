@@ -4,6 +4,23 @@
 #include <ws2tcpip.h>
 #include <stdio.h>
 
+void ServerNetwork::AddClient(int aID, const sockaddr_in& aAddress)
+{
+	myConnectedClients.Add({ aID, aAddress });
+}
+
+void ServerNetwork::RemoveClient(int aID)
+{
+	for (int i = 0; i < myConnectedClients.Count(); ++i)
+	{
+		if (myConnectedClients[i].myID == aID)
+		{
+			myConnectedClients.RemoveCyclicAtIndex(i);
+			return;
+		}
+	}
+}
+
 void ServerNetwork::OnStart()
 {
 	WSADATA WSAData;

@@ -4,10 +4,22 @@
 
 #include "ClientNetwork.h"
 
-struct Pong_Player
+struct RemoteEntityState
 {
-	int myID;
+	int myStateID = -1;
 	Vector2f myPosition;
+};
+
+struct RemoteEntity
+{
+	int myEntityID;
+	//FW_GrowingArray<RemoteEntityState> myRemoteStates;
+
+	//RemoteEntityState myAlmostMostRecentServerState;
+	RemoteEntityState myMostRecentServerState;
+
+	Vector2f myCurrentPosition;
+	Vector2f myTargetPosition;
 };
 
 class Pong_Client : public FW_IGame
@@ -17,16 +29,31 @@ public:
 
 	bool Run() override;
 	void OnShutdown() override;
+	void BuildGameImguiEditor(unsigned int aGameOffscreenBufferTextureID) override;
 
 private:
-	void RenderPlayer(const Pong_Player& aPlayer, int aColor);
+	void RenderEntity(const Vector2f& aPosition, int aColor);
 
 	void HandleServerAcceptedConnection(const ServerAcceptConnectionNetworkMessage& aMessage, const sockaddr_in& aSenderAddress);
 	void HandleClientDisconnection(const ClientDisconnectionNetworkMessage& aMessage, const sockaddr_in& aSenderAddress);
-	void HandlePlayerSync(const PlayerSyncNetworkMessage& aMessage, const sockaddr_in& aSenderAddress);
+	void HandleNewPlayerConnected(const NewPlayerConnectedNetworkMessage& aMessage, const sockaddr_in& aSenderAddress);
+	void HandleFullSync(const FullSyncNetworkMessage& aMessage, const sockaddr_in& aSenderAddress);
+	void HandleServerEntity(const ServerEntityNetworkMessage& aMessage, const sockaddr_in& aSenderAddress);
+
+	void RequestConnectionToServer();
 
 	ClientNetwork myNetwork;
 
-	std::vector<Pong_Player> myRemotePlayers;
-	Pong_Player myLocalPlayer;
+	FW_GrowingArray<RemoteEntity> myEntities;
+	int myLocalEntityID;
+
+
+	bool myEnablePositionInterpolation;
+	bool myShowDemoWindow;
+
+	void StartExtraClientProcess();
+	void StartServerProcess();
+	std::vector<PROCESS_INFORMATION> myChildProcesses;
+
+	Vector2f InterpolateTowardsVector(const Vector2f& aCurrent, const Vector2f& aTarget, float aInterpolationTime, float aDelta) const;
 };

@@ -1,11 +1,11 @@
 #include "stdafx.h"
 #include "SFML_Engine.h"
-#include "Game.h"
+#include "Breakout.h"
 
 int main(int, char**)
 {
 	SFML_Engine engine(1280, 800);
-	Game game;
+	Breakout game;
 
 	engine.Run(game);
 

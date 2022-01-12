@@ -50,13 +50,13 @@ bool FW_FileSystem::GetAllFilesFromDirectory(const char* aDirectory, FW_GrowingA
 void FW_FileSystem::GetFileName(const FW_String& aFilePath, FW_String& aNameOut)
 {
 	int findIndex = aFilePath.RFind("/");
-	aNameOut = aFilePath.SubStr(findIndex + 1, aFilePath.Lenght());
+	aNameOut = aFilePath.SubStr(findIndex + 1, aFilePath.Length());
 }
 
 void FW_FileSystem::GetFileExtention(const FW_String& aFilePath, FW_String& aExtentionOut)
 {
 	int findIndex = aFilePath.RFind(".");
-	aExtentionOut = aFilePath.SubStr(findIndex + 1, aFilePath.Lenght());
+	aExtentionOut = aFilePath.SubStr(findIndex + 1, aFilePath.Length());
 }
 
 void FW_FileSystem::RemoveFileExtention(const FW_String& aFilePath, FW_String& aNameOut)
@@ -67,7 +67,7 @@ void FW_FileSystem::RemoveFileExtention(const FW_String& aFilePath, FW_String& a
 
 bool FW_FileSystem::GetFileInfo(const FW_String& aFilePath, FileInfo& aFileInfoOut)
 {
-	FW_ASSERT(aFilePath.Lenght() + 3 < MAX_PATH, "Filepath is too long");
+	FW_ASSERT(aFilePath.Length() + 3 < MAX_PATH, "Filepath is too long");
 
 	WIN32_FIND_DATA data;
 	HANDLE filehandle = FindFirstFile(aFilePath.GetBuffer(), &data);

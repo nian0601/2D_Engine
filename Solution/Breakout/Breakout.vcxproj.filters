@@ -1,7 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
-    <ClCompile Include="Game.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="stdafx.cpp">
       <Filter>Precompile</Filter>
@@ -21,9 +20,9 @@
     <ClCompile Include="PowerupSystem.cpp">
       <Filter>ECS\Systems</Filter>
     </ClCompile>
+    <ClCompile Include="Breakout.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="Game.h" />
     <ClInclude Include="stdafx.h">
       <Filter>Precompile</Filter>
     </ClInclude>
@@ -48,6 +47,7 @@
     <ClInclude Include="Components.h">
       <Filter>ECS</Filter>
     </ClInclude>
+    <ClInclude Include="Breakout.h" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Precompile">

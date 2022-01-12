@@ -66,7 +66,7 @@ namespace FW_Editor
 				if (ImGui::BeginMenu("Open"))
 				{
 					FW_GrowingArray<FW_FileSystem::FileInfo> levelFiles;
-					FW_FileSystem::GetAllFilesFromDirectory(FW_LevelLoader::ourLevelPath, levelFiles);
+					FW_FileSystem::GetAllFilesFromDirectory(FW_LevelLoader::ourLevelPath.GetBuffer(), levelFiles);
 
 					ImGui::Text("Levels");
 					ImGui::Separator();

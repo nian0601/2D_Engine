@@ -89,7 +89,7 @@
     </ClCompile>
     <Lib>
       <AdditionalLibraryDirectories>$(SolutionDir)..\SFML\libs;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>sfml-graphics-s-d.lib;sfml-window-s-d.lib;sfml-system-s-d.lib;opengl32.lib;freetype.lib;gdi32.lib;winmm.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>sfml-graphics-s-d.lib;sfml-window-s-d.lib;sfml-system-s-d.lib;sfml-audio-s-d.lib;opengl32.lib;freetype.lib;gdi32.lib;winmm.lib;openal32.lib;flac.lib;vorbisenc.lib;vorbisfile.lib;vorbis.lib;ogg.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Lib>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -118,7 +118,7 @@
     </Link>
     <Lib>
       <AdditionalLibraryDirectories>$(SolutionDir)..\SFML\libs;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>sfml-graphics-s.lib;sfml-window-s.lib;sfml-system-s.lib;opengl32.lib;freetype.lib;gdi32.lib;winmm.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>sfml-graphics-s.lib;sfml-window-s.lib;sfml-system-s.lib;sfml-audio-s.lib;opengl32.lib;freetype.lib;gdi32.lib;winmm.lib;openal32.lib;flac.lib;vorbisenc.lib;vorbisfile.lib;vorbis.lib;ogg.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Lib>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -135,6 +135,8 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="FW_AudioSystem.h" />
+    <ClInclude Include="FW_CircularArray.h" />
     <ClInclude Include="FW_CollisionSystem.h" />
     <ClInclude Include="FW_Components.h" />
     <ClInclude Include="FW_ComponentStorage.h" />
@@ -147,6 +149,7 @@
     <ClInclude Include="FW_GrowingArray.h" />
     <ClInclude Include="FW_Includes.h" />
     <ClInclude Include="FW_LevelLoader.h" />
+    <ClInclude Include="FW_Logger.h" />
     <ClInclude Include="FW_Math.h" />
     <ClInclude Include="FW_MessageQueue.h" />
     <ClInclude Include="FW_Messages.h" />
@@ -154,6 +157,8 @@
     <ClInclude Include="FW_RenderSystem.h" />
     <ClInclude Include="FW_String.h" />
     <ClInclude Include="FW_IGame.h" />
+    <ClInclude Include="FW_Threading.h" />
+    <ClInclude Include="FW_Vector3.h" />
     <ClInclude Include="imgui\imconfig.h" />
     <ClInclude Include="imgui\imgui-SFML.h" />
     <ClInclude Include="imgui\imgui-SFML_export.h" />
@@ -165,6 +170,7 @@
     <ClInclude Include="FW_Input.h" />
     <ClInclude Include="FW_Rect.h" />
     <ClInclude Include="FW_Renderer.h" />
+    <ClInclude Include="SFML_AudioSystem.h" />
     <ClInclude Include="SFML_Engine.h" />
     <ClInclude Include="SFML_Input.h" />
     <ClInclude Include="SFML_Renderer.h" />
@@ -180,6 +186,7 @@
     <ClCompile Include="FW_FileProcessor.cpp" />
     <ClCompile Include="FW_FileSystem.cpp" />
     <ClCompile Include="FW_LevelLoader.cpp" />
+    <ClCompile Include="FW_Logger.cpp" />
     <ClCompile Include="FW_Murmur.cpp" />
     <ClCompile Include="FW_RenderSystem.cpp" />
     <ClCompile Include="imgui\imgui-SFML.cpp" />
@@ -187,6 +194,7 @@
     <ClCompile Include="imgui\imgui_demo.cpp" />
     <ClCompile Include="imgui\imgui_draw.cpp" />
     <ClCompile Include="imgui\imgui_widgets.cpp" />
+    <ClCompile Include="SFML_AudioSystem.cpp" />
     <ClCompile Include="SFML_Engine.cpp" />
     <ClCompile Include="SFML_Input.cpp" />
     <ClCompile Include="SFML_Renderer.cpp" />

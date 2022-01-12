@@ -1,5 +1,5 @@
 #include "stdafx.h"
-#include "Game.h"
+#include "Breakout.h"
 
 #include "BallSystem.h"
 #include "HealthSystem.h"
@@ -13,8 +13,9 @@
 #include "FW_MessageQueue.h"
 #include "FW_RenderSystem.h"
 #include "FW_EntityManager.h"
+#include "FW_AudioSystem.h"
 
-Game::Game()
+void Breakout::OnStartup()
 {
 	SetupEditorGrid();
 
@@ -28,16 +29,18 @@ Game::Game()
 	myEntityManager->RegisterComponent<PowerUpComponent>();
 
 	FW_MessageQueue& messageQueue = myEntityManager->GetMessageQueue();
-	messageQueue.SubscribeToMessage<FW_CollisionMessage>(std::bind(&Game::OnCollision, this, std::placeholders::_1));
-	messageQueue.SubscribeToMessage<FW_EntityCreatedMessage>(std::bind(&Game::OnEntityCreated, this, std::placeholders::_1));
-	messageQueue.SubscribeToMessage<FW_PreEntityRemovedMessage>(std::bind(&Game::OnPreEntityRemoved, this, std::placeholders::_1));
+	messageQueue.SubscribeToMessage<FW_CollisionMessage>(std::bind(&Breakout::OnCollision, this, std::placeholders::_1));
+	messageQueue.SubscribeToMessage<FW_EntityCreatedMessage>(std::bind(&Breakout::OnEntityCreated, this, std::placeholders::_1));
+	messageQueue.SubscribeToMessage<FW_PreEntityRemovedMessage>(std::bind(&Breakout::OnPreEntityRemoved, this, std::placeholders::_1));
 
 	StartLevel();
 	myTextPosition.x = static_cast<int>(myGameArea.myCenterPos.x);
 	myTextPosition.y = static_cast<int>(myGameArea.myBottomRight.y) - 200;
+
+	myDamageSoundEffectID = FW_AudioSystem::LoadClip("UwU.wav");
 }
 
-bool Game::Run()
+bool Breakout::Run()
 {
 	FW_RenderSystem::Run(*myEntityManager);
 
@@ -80,7 +83,7 @@ bool Game::Run()
 	return true;
 }
 
-void Game::StartLevel()
+void Breakout::StartLevel()
 {
 	myEntityManager->QueueRemovalAllEntities();
 	myEntityManager->FlushEntityRemovals();
@@ -91,27 +94,27 @@ void Game::StartLevel()
 	myRemainingLives = 3;
 }
 
-void Game::RunStartScreen()
+void Breakout::RunStartScreen()
 {
 	FW_Renderer::RenderText("--- Press Space to begin ---", myTextPosition, 0xFFFFFFFF, FW_Renderer::TextAlignment::CENTER);
 	if (FW_Input::WasKeyReleased(FW_Input::KeyCode::SPACE))
 		myGameState = GameState::IS_RUNNING;
 }
 
-void Game::RunWaitingForNewRound()
+void Breakout::RunWaitingForNewRound()
 {
 	if (FW_Input::WasKeyReleased(FW_Input::KeyCode::SPACE))
 		myGameState = GameState::IS_RUNNING;
 }
 
-void Game::RunIsRunning()
+void Breakout::RunIsRunning()
 {
 	FW_ComponentStorage<HealthComponent>& healthStorage = myEntityManager->GetComponentStorage<HealthComponent>();
 	if (healthStorage.Count() <= 0)
 		myGameState = GameState::GAME_WON;
 }
 
-void Game::RunGameOver()
+void Breakout::RunGameOver()
 {
 	FW_Renderer::RenderText("--- GAME OVER LUL ---", myTextPosition, 0xFFFFFFFF, FW_Renderer::TextAlignment::CENTER);
 	FW_Renderer::RenderText("Press Space to restart", { myTextPosition.x, myTextPosition.y + 20 }, 0xFFFFFFFF, FW_Renderer::TextAlignment::CENTER);
@@ -119,7 +122,7 @@ void Game::RunGameOver()
 		StartLevel();
 }
 
-void Game::RunGameWon()
+void Breakout::RunGameWon()
 {
 	FW_Renderer::RenderText("--- YOU WON ---", myTextPosition, 0xFFFFFFFF, FW_Renderer::TextAlignment::CENTER);
 	FW_Renderer::RenderText("Press Space to restart", { myTextPosition.x, myTextPosition.y + 20 }, 0xFFFFFFFF, FW_Renderer::TextAlignment::CENTER);
@@ -127,7 +130,7 @@ void Game::RunGameWon()
 		StartLevel();
 }
 
-void Game::OnEntityCreated(const FW_EntityCreatedMessage& aMessage)
+void Breakout::OnEntityCreated(const FW_EntityCreatedMessage& aMessage)
 {
 	if (TranslationComponent* translation = myEntityManager->FindComponent<TranslationComponent>(aMessage.myEntity))
 	{
@@ -142,7 +145,7 @@ void Game::OnEntityCreated(const FW_EntityCreatedMessage& aMessage)
 		render->myTexture = FW_Renderer::GetTexture("spritesheet.png");
 }
 
-void Game::OnPreEntityRemoved(const FW_PreEntityRemovedMessage& aMessage)
+void Breakout::OnPreEntityRemoved(const FW_PreEntityRemovedMessage& aMessage)
 {
 	if (myIsInEditorMode)
 		return;
@@ -153,17 +156,17 @@ void Game::OnPreEntityRemoved(const FW_PreEntityRemovedMessage& aMessage)
 		OnBallRemoved();
 }
 
-void Game::OnCollision(const FW_CollisionMessage& aMessage)
+void Breakout::OnCollision(const FW_CollisionMessage& aMessage)
 {
 	if (myIsInEditorMode)
 		return;
 
 	BallSystem::OnCollision(*myEntityManager, aMessage);
 	PowerupSystem::OnCollision(*myEntityManager, aMessage);
-	HealthSystem::OnCollision(*myEntityManager, aMessage);
+	HealthSystem::OnCollision(*myEntityManager, aMessage, myDamageSoundEffectID);
 }
 
-void Game::OnBallRemoved()
+void Breakout::OnBallRemoved()
 {
 	FW_ComponentStorage<BallComponent>& ballStorage = myEntityManager->GetComponentStorage<BallComponent>();
 	if (ballStorage.Count() > 1)
@@ -188,21 +191,14 @@ void Game::OnBallRemoved()
 			}
 		}
 
-		myEntityManager->CreateEntity("Data/Entities/ball.entity", newBallPosition);
+		FW_LevelLoader::AddEntity(*myEntityManager, newBallPosition, "ball");
 
 		myGameState = GameState::WAITING_FOR_NEW_ROUND;
 	}
 }
 
-void Game::RunEditorLogic()
+void Breakout::RunEditorLogic()
 {
-	static bool debugDrawCollision = false;
-	static bool debugDrawGameArea = false;
-	ImGui::Checkbox("Show Grid", &myShowGrid);
-	ImGui::Checkbox("Show Collision", &debugDrawCollision);
-	ImGui::Checkbox("Show GameArea", &debugDrawGameArea);
-	ImGui::Separator();
-
 	bool leftMouseDown = FW_Input::WasMousePressed(FW_Input::LEFTMB);
 	bool leftMouseUp = FW_Input::WasMouseReleased(FW_Input::LEFTMB);
 
@@ -255,14 +251,31 @@ void Game::RunEditorLogic()
 			FW_Renderer::RenderRect(cell, color);
 	}
 
-	if (debugDrawCollision)
+	if (myDebugDrawCollision)
 		FW_CollisionSystem::DebugDraw(*myEntityManager);
 
-	if (debugDrawGameArea)
+	if (myDebugDrawGameArea)
 		FW_Renderer::RenderRect(myGameArea, 0x66FFAAFF);
 }
 
-void Game::SetupEditorGrid()
+void Breakout::BuildGameImguiEditor(unsigned int aGameOffscreenBufferTextureID)
+{
+	ImGui::BeginChild(ImGui::GetID((void*)(intptr_t)55), ImVec2(250, 100), true);
+	ImGui::Checkbox("Show Demo Window", &myShowDemoWindow);
+	ImGui::Checkbox("Show Grid", &myShowGrid);
+	ImGui::Checkbox("Show Collision", &myDebugDrawCollision);
+	ImGui::Checkbox("Show GameArea", &myDebugDrawGameArea);
+	ImGui::EndChild();
+
+	ImGui::SameLine();
+
+	ImGui::Image(aGameOffscreenBufferTextureID, ImVec2(500, 500), ImVec2(0, 1), ImVec2(1, 0));
+
+	if (myShowDemoWindow)
+		ImGui::ShowDemoWindow();
+}
+
+void Breakout::SetupEditorGrid()
 {
 	int numXCells = 15;
 	int numYCells = 20;
@@ -281,7 +294,7 @@ void Game::SetupEditorGrid()
 	}
 }
 
-FW_EntityID Game::GetEntityUnderMouse()
+FW_EntityID Breakout::GetEntityUnderMouse()
 {
 	if (!Contains(myGameArea, FW_Input::GetMousePositionf()))
 		return InvalidEntity;
@@ -302,7 +315,7 @@ FW_EntityID Game::GetEntityUnderMouse()
 	return InvalidEntity;
 }
 
-void Game::GetEntitiesInSelection(FW_GrowingArray<FW_EntityID>& someEntitiesOut)
+void Breakout::GetEntitiesInSelection(FW_GrowingArray<FW_EntityID>& someEntitiesOut)
 {
 	if (!Contains(myGameArea, FW_Input::GetMousePositionf()))
 		return;
