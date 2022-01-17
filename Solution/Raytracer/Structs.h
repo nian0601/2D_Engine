@@ -44,16 +44,6 @@ struct RayHit
 	}
 };
 
-struct Sphere
-{
-	Vector3f myPosition;
-	float myRadius;
-
-	Material myMaterial;
-
-	FW_String myUIName;
-};
-
 struct AABB
 {
 	Vector3f myCenterPos;

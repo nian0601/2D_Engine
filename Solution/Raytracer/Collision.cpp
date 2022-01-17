@@ -1,18 +1,6 @@
 #include "Collision.h"
 #include <float.h>
 
-bool AABBvsAABB(const AABB& aFirst, const AABB& aSecond)
-{
-	if (aFirst.myMaxPos.x < aSecond.myMinPos.x) return false;
-	if (aFirst.myMaxPos.y < aSecond.myMinPos.y) return false;
-	if (aFirst.myMaxPos.z < aSecond.myMinPos.z) return false;
-	if (aFirst.myMinPos.x > aSecond.myMaxPos.x) return false;
-	if (aFirst.myMinPos.y > aSecond.myMaxPos.y) return false;
-	if (aFirst.myMinPos.z > aSecond.myMaxPos.z) return false;
-
-	return true;
-}
-
 bool RayHitAABB(const Ray& anRay, const AABB& anAABB)
 {
 	static const char RIGHT = 0;
@@ -101,51 +89,18 @@ bool RayHitAABB(const Ray& anRay, const AABB& anAABB)
 	return true;
 }
 
-bool RayVsSphere(const Ray& aRay, const Sphere& aSphere, float aMinT, float aMaxT, RayHit& aHitRecord)
+bool FirstAABBContainedBySecond(const AABB& aFirst, const AABB& aSecond)
 {
-	Vector3f oc = aRay.myPosition - aSphere.myPosition;
-	float a = Length2(aRay.myDirection);
-	float halfB = Dot(oc, aRay.myDirection);
-	float c = Length2(oc) - aSphere.myRadius * aSphere.myRadius;
-	float discriminant = halfB * halfB - a * c;
+	if (aFirst.myMinPos.x < aSecond.myMinPos.x) return false;
+	if (aFirst.myMinPos.y < aSecond.myMinPos.y) return false;
+	if (aFirst.myMinPos.z < aSecond.myMinPos.z) return false;
 
-	if (discriminant < 0)
-		return false;
-
-	float squareDiscriminant = sqrt(discriminant);
-	float root = (-halfB - squareDiscriminant) / a;
-	if (root < aMinT || root > aMaxT)
-	{
-		root = (-halfB + squareDiscriminant) / a;
-		if (root < aMinT || root > aMaxT)
-			return false;
-	}
-
-	aHitRecord.myT = root;
-	aHitRecord.myPosition = aRay.PositionAt(aHitRecord.myT);
-	Vector3f outwardNormal = (aHitRecord.myPosition - aSphere.myPosition) / aSphere.myRadius;
-	aHitRecord.SetFaceNormal(aRay, outwardNormal);
-	aHitRecord.myMaterial = aSphere.myMaterial;
-	return true;
-}
-
-bool SphereContainedByAABB(const Sphere& aSphere, const AABB& anAABB)
-{
-	const Vector3f sphereMin = aSphere.myPosition - aSphere.myRadius;
-	const Vector3f sphereMax = aSphere.myPosition + aSphere.myRadius;
-
-	if (sphereMin.x < anAABB.myMinPos.x) return false;
-	if (sphereMin.y < anAABB.myMinPos.y) return false;
-	if (sphereMin.z < anAABB.myMinPos.z) return false;
-
-	if (sphereMax.x > anAABB.myMaxPos.x) return false;
-	if (sphereMax.y > anAABB.myMaxPos.y) return false;
-	if (sphereMax.z > anAABB.myMaxPos.z) return false;
+	if (aFirst.myMaxPos.x > aSecond.myMaxPos.x) return false;
+	if (aFirst.myMaxPos.y > aSecond.myMaxPos.y) return false;
+	if (aFirst.myMaxPos.z > aSecond.myMaxPos.z) return false;
 
 	return true;
 }
-
-//////////////////////////////////////////////////////////////////////////
 
 void SplitAABB(const AABB& anAABB, FW_GrowingArray<AABB>& outAABBs)
 {
@@ -187,6 +142,73 @@ void SplitAABB(const AABB& anAABB, FW_GrowingArray<AABB>& outAABBs)
 	topFrontRightAABB = AABBFromMinCornerAndSize({ center.x, center.y, center.z }, halfExtents);
 }
 
+//////////////////////////////////////////////////////////////////////////
+
+bool Sphere::Hit(const Ray& aRay, float aMinT, float aMaxT, RayHit& aHitRecord) const
+{
+	Vector3f oc = aRay.myPosition - myPosition;
+	float a = Length2(aRay.myDirection);
+	float halfB = Dot(oc, aRay.myDirection);
+	float c = Length2(oc) - myRadius * myRadius;
+	float discriminant = halfB * halfB - a * c;
+
+	if (discriminant < 0)
+		return false;
+
+	float squareDiscriminant = sqrt(discriminant);
+	float root = (-halfB - squareDiscriminant) / a;
+	if (root < aMinT || aMaxT < root)
+	{
+		root = (-halfB + squareDiscriminant) / a;
+		if (root < aMinT || aMaxT < root)
+			return false;
+	}
+
+	aHitRecord.myT = root;
+	aHitRecord.myPosition = aRay.PositionAt(aHitRecord.myT);
+	Vector3f outwardNormal = (aHitRecord.myPosition - myPosition) / myRadius;
+	aHitRecord.SetFaceNormal(aRay, outwardNormal);
+	aHitRecord.myMaterial = myMaterial;
+	return true;
+}
+
+
+void Sphere::BuildAABB()
+{
+	const Vector3f sphereMin = myPosition - myRadius;
+	const Vector3f sphereMax = myPosition + myRadius;
+	myAABB = AABBFromPoints(sphereMin, sphereMax);
+}
+
+bool XY_Rect::Hit(const Ray& aRay, float aMinT, float aMaxT, RayHit& aHitRecord) const
+{
+	float t = (k - aRay.myPosition.z) / aRay.myDirection.z;
+	if (t < aMinT || t > aMaxT)
+		return false;
+
+	float x = aRay.myPosition.x + t * aRay.myDirection.x;
+	float y = aRay.myPosition.y + t * aRay.myDirection.y;
+	if (x < x0 || x > x1 || y < y0 || y > y1)
+		return false;
+
+	aHitRecord.myT = t;
+	aHitRecord.myPosition = aRay.PositionAt(t);
+	aHitRecord.SetFaceNormal(aRay, { 0.f, 0.f, 1.f });
+	aHitRecord.myMaterial = myMaterial;
+	return true;
+}
+
+void XY_Rect::BuildAABB()
+{
+	const Vector3f min(x0, y0, k - 0.0001f);
+	const Vector3f max(x1, y1, k + 0.0001f);
+	myAABB = AABBFromPoints(min, max);
+}
+
+//////////////////////////////////////////////////////////////////////////
+
+
+
 Octtree::Node::Node(int aDepth, const AABB& anAABB)
 	: myAABB(anAABB)
 	, myDepth(aDepth)
@@ -199,9 +221,6 @@ Octtree::Node::Node(int aDepth, const AABB& anAABB)
 
 	for (int i = 0; i < 8; ++i)
 		myChildNodes.Add(nullptr);
-
-	//for (int i = 0; i < 8; ++i)
-	//	myChildNodes.Add(new Node(aDepth - 1, childAABBs[i]));
 }
 
 Octtree::Node::~Node()
@@ -220,9 +239,9 @@ Octtree::~Octtree()
 	delete myRootNode;
 }
 
-void Octtree::AddSphere(const Sphere* aSphere)
+void Octtree::AddHitable(const Hitable* aHitable)
 {
-	InsertSphereIntoNode(aSphere, myRootNode);
+	InsertHitableIntoNode(aHitable, myRootNode);
 }
 
 void Octtree::Clear()
@@ -241,9 +260,9 @@ bool Octtree::CastRay(const Ray& aRay, RayHit& aOutHit) const
 
 bool Octtree::CastRayVsNode(const Ray& aRay, Node* aNode, RayHit& aOutHit, bool& aHitAnything, float& aClosestSoFar) const
 {
-	for (const Sphere* sphere : aNode->myObjects)
+	for (const Hitable* hitable : aNode->myObjects)
 	{
-		if (RayVsSphere(aRay, *sphere, 0.01f, aClosestSoFar, aOutHit))
+		if (hitable->Hit(aRay, 0.01f, aClosestSoFar, aOutHit))
 		{
 			aHitAnything = true;
 			aClosestSoFar = aOutHit.myT;
@@ -252,7 +271,7 @@ bool Octtree::CastRayVsNode(const Ray& aRay, Node* aNode, RayHit& aOutHit, bool&
 
 	for (Node* child : aNode->myChildNodes)
 	{
-		if(child && RayHitAABB(aRay, child->myAABB))
+		if (child && RayHitAABB(aRay, child->myAABB))
 			CastRayVsNode(aRay, child, aOutHit, aHitAnything, aClosestSoFar);
 	}
 
@@ -260,34 +279,39 @@ bool Octtree::CastRayVsNode(const Ray& aRay, Node* aNode, RayHit& aOutHit, bool&
 	return aHitAnything;
 }
 
-void Octtree::InsertSphereIntoNode(const Sphere* aSphere, Node* aNode)
+void Octtree::InsertHitableIntoNode(const Hitable* aHitable, Node* aNode)
 {
 	if (aNode->myDepth == 0)
 	{
-		aNode->myObjects.Add(aSphere);
+		aNode->myObjects.Add(aHitable);
 		return;
 	}
 
 	for (int i = 0; i < 8; ++i)
 	{
-		if (SphereContainedByAABB(*aSphere, aNode->myChildAABBs[i]))
+		if (FirstAABBContainedBySecond(aHitable->myAABB, aNode->myChildAABBs[i]))
 		{
 			if (aNode->myChildNodes[i] == nullptr)
 				aNode->myChildNodes[i] = new Node(aNode->myDepth - 1, aNode->myChildAABBs[i]);
 
-			InsertSphereIntoNode(aSphere, aNode->myChildNodes[i]);
+			InsertHitableIntoNode(aHitable, aNode->myChildNodes[i]);
 			return;
 		}
 	}
 
-	aNode->myObjects.Add(aSphere);
+	aNode->myObjects.Add(aHitable);
 }
 
 //////////////////////////////////////////////////////////////////////////
 
-void CollisionWorld::AddSphere(const Sphere& aSphere)
+void CollisionWorld::AddObject(const Sphere& aSphere)
 {
 	mySpheres.Add(aSphere);
+}
+
+void CollisionWorld::AddObject(const XY_Rect& aRect)
+{
+	myXYRects.Add(aRect);
 }
 
 bool CollisionWorld::CastRay(const Ray& aRay, RayHit& aOutHit) const
@@ -295,26 +319,39 @@ bool CollisionWorld::CastRay(const Ray& aRay, RayHit& aOutHit) const
 #if 1
 	return myOctree.CastRay(aRay, aOutHit);
 #else
-	bool hitAnything = false;
+
+	bool hitanything = false;
 	float closestSoFar = FLT_MAX;
-	
+
 	for (const Sphere& sphere : mySpheres)
 	{
-		if (RayVsSphere(aRay, sphere, 0.01f, closestSoFar, aOutHit))
-		{
-			hitAnything = true;
-			closestSoFar = aOutHit.myT;
-		}
+		if(sphere.Hit(aRay, 0.001f, closestSoFar, aOutHit))
+			hitanything = true;
 	}
-	
-	return hitAnything;
+
+	for (const XY_Rect& rect : myXYRects)
+	{
+		if (rect.Hit(aRay, 0.01f, closestSoFar, aOutHit))
+			hitanything = true;
+	}
+
+	return hitanything;
 #endif
 }
 
 void CollisionWorld::BuildOctree()
 {
-	for (const Sphere& sphere : mySpheres)
-		myOctree.AddSphere(&sphere);
+	for (Sphere& sphere : mySpheres)
+	{
+		sphere.BuildAABB();
+		myOctree.AddHitable(&sphere);
+	}
+
+	for (XY_Rect& rect : myXYRects)
+	{
+		rect.BuildAABB();
+		myOctree.AddHitable(&rect);
+	}
 }
 
 void CollisionWorld::ClearOctree()
@@ -326,4 +363,5 @@ void CollisionWorld::ClearWorld()
 {
 	ClearOctree();
 	mySpheres.RemoveAll();
+	myXYRects.RemoveAll();
 }

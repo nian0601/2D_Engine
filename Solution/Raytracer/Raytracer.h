@@ -46,7 +46,18 @@ private:
 		bool myUseFlatBackground;
 
 		//int mySceneToRender;
+
+		// Camera Parameters
+		Vector3f myLookFrom;
+		Vector3f myLookAt;
+		Vector3f myUp;
+		float myAperature = 0.1f;
+		float myDistToFocus = 10.f;
+		float myVFov = 20.f;
 	};
+
+	void BuildRandomScene();
+	void BuildSimpleLightScene();
 
 	Vector3f CastRay(Ray& aRay, const CollisionWorld& aWorld, int aDepth);
 
