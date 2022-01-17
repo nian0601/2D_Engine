@@ -18,7 +18,7 @@ namespace Materials_Private
 
 	bool ScatterLambertian(const Ray& aRayIn, const RayHit& aHitRecord, Vector3f& anAttenuation, Ray& aScatteredRay)
 	{
-		Vector3f scatterDirection = aHitRecord.myNormal + FW_RandomInHemisphereVector(aHitRecord.myNormal);
+		Vector3f scatterDirection = aHitRecord.myNormal + FW_RandomUnitVector();
 		if (NearZero(scatterDirection))
 			scatterDirection = aHitRecord.myNormal;
 
