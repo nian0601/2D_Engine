@@ -48,7 +48,7 @@ inline Vector3f FW_RandomUnitSphereVector()
 {
 	while (true)
 	{
-		Vector3f v = FW_RandomVector3f();
+		Vector3f v = FW_RandomVector3f(-1.f, 1.f);
 		if(Length2(v) >= 1.f) continue;
 
 		return v;
