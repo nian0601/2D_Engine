@@ -339,6 +339,10 @@ namespace FW_Renderer
 	void SaveTextureToFile(const Texture& aTexture, const char* aFileName)
 	{
 		if (sf::Texture* texture = SFML_Renderer::GetSFMLTexture(aTexture.myTextureID))
-			texture->copyToImage().saveToFile(aFileName);
+		{
+			std::string fullPath = SFML_Renderer::ourAssetPath;
+			fullPath.append(aFileName);
+			texture->copyToImage().saveToFile(fullPath.c_str());
+		}
 	}
 }
