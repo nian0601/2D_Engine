@@ -16,6 +16,39 @@ struct Material
 	Vector3f myColor = { 1.f, 1.f, 1.f };
 	int myMaterialType = Lambertian;
 	float myMaterialParameter = 1.f;
+
+	static Material MakeLambertian(const Vector3f& aColor)
+	{
+		Material result;
+		result.myMaterialType = Lambertian;
+		result.myColor = aColor;
+		return result;
+	}
+
+	static Material MakeMetal(const Vector3f& aColor, float aFuzz)
+	{
+		Material result;
+		result.myMaterialType = Metal;
+		result.myColor = aColor;
+		result.myMaterialParameter = aFuzz;
+		return result;
+	}
+
+	static Material MakeDialectric(float aFuzz)
+	{
+		Material result;
+		result.myMaterialType = Dialectric;
+		result.myMaterialParameter = aFuzz;
+		return result;
+	}
+
+	static Material MakeLight(const Vector3f& aColor)
+	{
+		Material result;
+		result.myMaterialType = LightSource;
+		result.myColor = aColor;
+		return result;
+	}
 };
 
 struct Ray
