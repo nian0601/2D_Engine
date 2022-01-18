@@ -16,7 +16,10 @@ void Raytracer::OnStartup()
 
 	// Should be able to select Scene from UI
 	//BuildRandomScene();
-	BuildSimpleLightScene();
+	//BuildSimpleLightScene();
+	//BuildCornellBoxScene();
+	//BuildFinalBoxScene();
+	BuildRandomSceneV2();
 
 	myCurrentState = RendererState::IDLE;
 }
@@ -77,9 +80,8 @@ void Raytracer::BuildGameImguiEditor(unsigned int aGameOffscreenBufferTextureID)
 
 	ImGui::SameLine();
 
-	const float aspectRatio = 16.f / 9.f;
-	const int imageWidth = 720;
-	const int imageHeight = static_cast<int>(imageWidth / aspectRatio);
+	const float imageWidth = 720.f;
+	const float imageHeight = imageWidth / myRenderingParameters.myAspectRatio;
 	ImGui::Image(aGameOffscreenBufferTextureID, ImVec2(imageWidth, imageHeight), ImVec2(0, 1), ImVec2(1, 0));
 }
 
@@ -97,36 +99,23 @@ void Raytracer::BuildRandomScene()
 
 	myWorld.ClearWorld();
 
-	Sphere ground;
-	ground.myPosition = { 0.f, -1000.f, 0.f };
-	ground.myRadius = 1000.f;
-	ground.myMaterial.myMaterialType = Material::Lambertian;
-	ground.myMaterial.myColor = { 0.5f, 0.5f, 0.5f };
+	Sphere ground({ 0.f, -1000.f, 0.f }, 1000.f);
+	ground.myMaterial = Material::MakeLambertian({ 0.5f, 0.5f, 0.5f });
 	ground.myUIName = "Ground";
 	myWorld.AddObject(ground);
 
-	Sphere dialectric;
-	dialectric.myRadius = 1.f;
-	dialectric.myPosition = { 0.f, 1.f, 0.f };
-	dialectric.myMaterial.myMaterialType = Material::Dialectric;
-	dialectric.myMaterial.myMaterialParameter = 1.5f;
+	Sphere dialectric({ 0.f, 1.f, 0.f }, 1.f);
+	dialectric.myMaterial = Material::MakeDialectric(1.5f);
 	dialectric.myUIName = "Dialectric";
 	myWorld.AddObject(dialectric);
 
-	Sphere lambertian;
-	lambertian.myRadius = 1.f;
-	lambertian.myPosition = { -4.f, 1.f, 0.f };
-	lambertian.myMaterial.myMaterialType = Material::Lambertian;
-	lambertian.myMaterial.myColor = { 0.4f, 0.2f, 0.1f };
+	Sphere lambertian({ -4.f, 1.f, 0.f }, 1.f);
+	lambertian.myMaterial = Material::MakeLambertian({ 0.4f, 0.2f, 0.1f });
 	lambertian.myUIName = "Lambertian";
 	myWorld.AddObject(lambertian);
 
-	Sphere metal;
-	metal.myRadius = 1.f;
-	metal.myPosition = { 4.f, 1.f, 0.f };
-	metal.myMaterial.myMaterialType = Material::Metal;
-	metal.myMaterial.myMaterialParameter = 0.f;
-	metal.myMaterial.myColor = { 0.7f, 0.6f, 0.5f };
+	Sphere metal({ 4.f, 1.f, 0.f }, 1.f);
+	metal.myMaterial = Material::MakeMetal({ 0.7f, 0.6f, 0.5f }, 0.f);
 	metal.myUIName = "Metal";
 	myWorld.AddObject(metal);
 
@@ -144,25 +133,19 @@ void Raytracer::BuildRandomScene()
 
 				if (chooseMaterial < 0.8f)
 				{
-					material.myMaterialType = Material::Lambertian;
-					material.myColor = FW_RandomVector3f() * FW_RandomVector3f();
+					material = Material::MakeLambertian(FW_RandomVector3f() * FW_RandomVector3f());
 				}
 				else if (chooseMaterial < 0.95f)
 				{
-					material.myMaterialType = Material::Metal;
-					material.myMaterialParameter = FW_RandFloat(0.f, 0.5f);
-					material.myColor = FW_RandomVector3f(0.5f, 1.f);
+					material = Material::MakeMetal(FW_RandomVector3f(0.5f, 1.f), FW_RandFloat(0.f, 0.5f));
 				}
 				else
 				{
-					material.myMaterialType = Material::Dialectric;
-					material.myMaterialParameter = 1.5f;
+					material = Material::MakeDialectric(1.f);
 				}
 
-				Sphere sphere;
-				sphere.myRadius = 0.2f;
+				Sphere sphere(center, 0.2f);
 				sphere.myMaterial = material;
-				sphere.myPosition = center;
 				myWorld.AddObject(sphere);
 			}
 		}
@@ -185,40 +168,181 @@ void Raytracer::BuildSimpleLightScene()
 
 	myWorld.ClearWorld();
 
-	Sphere ground;
-	ground.myPosition = { 0.f, -1000.f, 0.f };
-	ground.myRadius = 1000.f;
-	ground.myMaterial.myMaterialType = Material::Lambertian;
-	ground.myMaterial.myColor = { 0.5f, 0.5f, 0.5f };
+	Sphere ground({ 0.f, -1000.f, 0.f }, 1000.f);
+	ground.myMaterial = Material::MakeLambertian({ 0.5f, 0.5f, 0.5f });
 	ground.myUIName = "Ground";
 	myWorld.AddObject(ground);
 
-	Sphere lambertian;
-	lambertian.myRadius = 2.f;
-	lambertian.myPosition = { 0.f, 2.f, 0.f };
-	lambertian.myMaterial.myMaterialType = Material::Lambertian;
-	lambertian.myMaterial.myColor = { 0.4f, 0.2f, 0.1f };
+	Sphere lambertian({ 0.f, 2.f, 0.f }, 2.f);
+	lambertian.myMaterial = Material::MakeLambertian({ 0.4f, 0.2f, 0.1f });
 	lambertian.myUIName = "Lambertian";
 	myWorld.AddObject(lambertian);
 
-	XY_Rect diffLight;
-	diffLight.x0 = 3;
-	diffLight.x1 = 5;
-	diffLight.y0 = 1;
-	diffLight.y1 = 3;
-	diffLight.k = -2;
-	diffLight.myMaterial.myMaterialType = Material::LightSource;
-	diffLight.myMaterial.myColor = { 4.f, 4.f, 4.f };
+	XY_Rect diffLight(3, 5, 1, 3, -2, Material::MakeLight({ 4.f, 4.f, 4.f }));
 	myWorld.AddObject(diffLight);
 
 
-	Sphere lightSphere;
-	lightSphere.myRadius = 2.f;
-	lightSphere.myPosition = { 2.f, 2.f, 6.f };
-	lightSphere.myMaterial.myMaterialType = Material::LightSource;
-	lightSphere.myMaterial.myColor = { 4.f, 4.f, 4.f };
+	Sphere lightSphere({ 2.f, 2.f, 6.f }, 2.f);
+	lightSphere.myMaterial = Material::MakeLight({ 4.f, 4.f, 4.f });
 	lightSphere.myUIName = "LightSphere";
 	myWorld.AddObject(lightSphere);
+}
+
+void Raytracer::BuildCornellBoxScene()
+{
+	myRenderingParameters.myBackgroundColor = { 0.f, 0.f, 0.f };
+	myRenderingParameters.myUseFlatBackground = true;
+	myRenderingParameters.myLookFrom = { 278.f, 278.f, -800.f };
+	myRenderingParameters.myLookAt = { 278.f, 278.f, 0.f};
+	myRenderingParameters.myVFov = 40.f;
+
+	myRenderingParameters.mySamplesPerPixel = 200;
+	myRenderingParameters.myMaxBounces = 50;
+	myRenderingParameters.myImageWidth = 600;
+	myRenderingParameters.myAspectRatio = 1.f;
+
+	myWorld.ClearWorld();
+
+	Material red = Material::MakeLambertian({ 0.65f, 0.05f, 0.05f });
+	Material white = Material::MakeLambertian({ 0.73f, 0.73f, 0.73f });
+	Material green = Material::MakeLambertian({0.12f, 0.45f, 0.15f});
+	Material light = Material::MakeLight({ 15.f, 15.f, 15.f });
+
+	YZ_Rect yz0(0.f, 555.f, 0.f, 555.f, 555.f, green);
+	myWorld.AddObject(yz0);
+
+	YZ_Rect yz1(0.f, 555.f, 0.f, 555.f, 0.f, red);
+	myWorld.AddObject(yz1);
+
+	XZ_Rect lightRect(213.f, 343.f, 227.f, 332.f, 554.f, light);
+	myWorld.AddObject(lightRect);
+
+	XZ_Rect xz0(0.f, 555.f, 0.f, 555.f, 0.f, white);
+	myWorld.AddObject(xz0);
+
+	XZ_Rect xz1(0.f, 555.f, 0.f, 555.f, 555.f, white);
+	myWorld.AddObject(xz1);
+
+	XY_Rect xy(0.f, 555.f, 0.f, 555.f, 555.f, white);
+	myWorld.AddObject(xy);
+	
+	Box box0({ 130.f, 0.f, 65.f }, { 295.f, 165.f, 230.f }, white);
+	myWorld.AddObject(box0);
+
+	Box box1({ 265.f, 0.f, 295.f }, { 430.f, 330.f, 460.f }, white);
+	myWorld.AddObject(box1);
+}
+
+void Raytracer::BuildFinalBoxScene()
+{
+	myRenderingParameters.myBackgroundColor = { 0.f, 0.f, 0.f };
+	myRenderingParameters.myUseFlatBackground = true;
+	myRenderingParameters.myLookFrom = { 478.f, 278.f, -600.f };
+	myRenderingParameters.myLookAt = { 278.f, 278.f, 0.f };
+	myRenderingParameters.myVFov = 40.f;
+
+	myRenderingParameters.mySamplesPerPixel = 100;
+	myRenderingParameters.myMaxBounces = 8;
+	myRenderingParameters.myImageWidth = 800;
+	myRenderingParameters.myAspectRatio = 1.f;
+
+	myWorld.ClearWorld();
+
+
+	Material ground = Material::MakeLambertian({ 0.48f, 0.83f, 0.53f });
+
+	const int boxes_per_side = 20;
+	for (int i = 0; i < boxes_per_side; i++) 
+	{
+		for (int j = 0; j < boxes_per_side; j++) 
+		{
+			float w = 100.f;
+			float x0 = -1000.f + i * w;
+			float z0 = -1000.f + j * w;
+			float y0 = 0.f;
+			float x1 = x0 + w;
+			float y1 = FW_RandFloat(1.f, 101.f);
+			float z1 = z0 + w;
+
+			myWorld.AddObject(Box({ x0, y0, z0 }, { x1, y1, z1 }, ground));
+		}
+	}
+
+	Material light = Material::MakeLight({ 7.f, 7.f, 7.f });
+	//myWorld.AddObject(XZ_Rect(123, 423.f, 147.f, 412.f, 554.f, light));
+	myWorld.AddObject(XZ_Rect(123, 423.f, 147.f, 412.f, 354.f, light));
+}
+
+void Raytracer::BuildRandomSceneV2()
+{
+	myRenderingParameters.myBackgroundColor = { 0.f, 0.f, 0.f };
+	myRenderingParameters.myUseFlatBackground = true;
+	myRenderingParameters.myLookFrom = { 20.f, 10.f, -10.f };
+	myRenderingParameters.myLookAt = { 0.f, 1.f, 0.f };
+	myRenderingParameters.myUp = { 0.f, 1.f, 0.f };
+	myRenderingParameters.myAperature = 0.1f;
+	myRenderingParameters.myDistToFocus = 25.f;
+	myRenderingParameters.myVFov = 20.f;
+
+
+	myWorld.ClearWorld();
+
+	Sphere ground({ 0.f, -1000.f, 0.f }, 1000.f);
+	ground.myMaterial = Material::MakeLambertian({ 0.5f, 0.5f, 0.5f });
+	ground.myUIName = "Ground";
+	myWorld.AddObject(ground);
+
+	Sphere dialectric({ 0.f, 1.f, 0.f }, 1.f);
+	dialectric.myMaterial = Material::MakeDialectric(1.5f);
+	dialectric.myUIName = "Dialectric";
+	myWorld.AddObject(dialectric);
+
+	Sphere lambertian({ -4.f, 1.f, 0.f }, 1.f);
+	lambertian.myMaterial = Material::MakeLambertian({ 0.4f, 0.2f, 0.1f });
+	lambertian.myUIName = "Lambertian";
+	myWorld.AddObject(lambertian);
+
+	Sphere metal({ 4.f, 1.f, 0.f }, 1.f);
+	metal.myMaterial = Material::MakeMetal({ 0.7f, 0.6f, 0.5f }, 0.f);
+	metal.myUIName = "Metal";
+	myWorld.AddObject(metal);
+
+	for (int a = -11; a < 11; ++a)
+	{
+		for (int b = -11; b < 11; ++b)
+		{
+			float chooseMaterial = FW_RandFloat();
+			Vector3f center = { a + 0.9f * FW_RandFloat(), 0.2f, b + 0.9f * FW_RandFloat() };
+
+			Vector3f vectorForDistanceTest = center - Vector3f(4.f, 0.2f, 0.f);
+			if (Length(vectorForDistanceTest) > 0.9f)
+			{
+				Material material;
+
+				if (chooseMaterial < 0.1f)
+				{
+					float intensity = FW_RandFloat(2.f, 4.f);
+					material = Material::MakeLight({ intensity, intensity, intensity });
+				}
+				else if (chooseMaterial < 0.8f)
+				{
+					material = Material::MakeLambertian(FW_RandomVector3f() * FW_RandomVector3f());
+				}
+				else if (chooseMaterial < 0.95f)
+				{
+					material = Material::MakeMetal(FW_RandomVector3f(0.5f, 1.f), FW_RandFloat(0.f, 0.5f));
+				}
+				else
+				{
+					material = Material::MakeDialectric(1.f);
+				}
+
+				Sphere sphere(center, 0.2f);
+				sphere.myMaterial = material;
+				myWorld.AddObject(sphere);
+			}
+		}
+	}
 }
 
 Vector3f Raytracer::CastRay(Ray& aRay, const CollisionWorld& aWorld, int aDepth)
@@ -384,10 +508,9 @@ void Raytracer::StopAllThreads()
 void Raytracer::UpdateStartRenderingState()
 {
 	// All of this should come from UI
-	const float aspectRatio = 16.f / 9.f;
 	const int imageWidth = myRenderingParameters.myImageWidth;
-	const int imageHeight = static_cast<int>(imageWidth / aspectRatio);
-	SFML_Renderer::ResizeOffscreenBuffer(imageWidth, aspectRatio);
+	const int imageHeight = static_cast<int>(imageWidth / myRenderingParameters.myAspectRatio);
+	SFML_Renderer::ResizeOffscreenBuffer(imageWidth, myRenderingParameters.myAspectRatio);
 
 	FW_Renderer::DeleteTexture(myTexture);
 	myTexture = FW_Renderer::CreateTexture({ imageWidth, imageHeight });
@@ -403,7 +526,7 @@ void Raytracer::UpdateStartRenderingState()
 		myRenderingParameters.myLookAt,
 		myRenderingParameters.myUp,
 		myRenderingParameters.myVFov,
-		aspectRatio,
+		myRenderingParameters.myAspectRatio,
 		myRenderingParameters.myAperature,
 		myRenderingParameters.myDistToFocus);
 
@@ -486,6 +609,8 @@ void Raytracer::BuildIdleStateUI()
 		ImGui::Checkbox("Flat Background", &myRenderingParameters.myUseFlatBackground);
 
 		ImGui::DragFloat3("Camera Position", &myRenderingParameters.myLookFrom.x, 0.1f, -50.f, 50.f);
+		ImGui::DragFloat3("Focus Position", &myRenderingParameters.myLookAt.x, 0.1f, -50.f, 50.f);
+		ImGui::DragFloat("Focus Distance", &myRenderingParameters.myDistToFocus, 0.1f, 0.1f, 100.f);
 
 		if (ImGui::TreeNode("Objects"))
 		{

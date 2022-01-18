@@ -205,6 +205,96 @@ void XY_Rect::BuildAABB()
 	myAABB = AABBFromPoints(min, max);
 }
 
+bool XZ_Rect::Hit(const Ray& aRay, float aMinT, float aMaxT, RayHit& aHitRecord) const
+{
+	float t = (k - aRay.myPosition.y) / aRay.myDirection.y;
+	if (t < aMinT || t > aMaxT)
+		return false;
+
+	float x = aRay.myPosition.x + t * aRay.myDirection.x;
+	float z = aRay.myPosition.z + t * aRay.myDirection.z;
+	if (x < x0 || x > x1 || z < z0 || z > z1)
+		return false;
+
+	aHitRecord.myT = t;
+	aHitRecord.myPosition = aRay.PositionAt(t);
+	aHitRecord.SetFaceNormal(aRay, { 0.f, 0.f, 1.f });
+	aHitRecord.myMaterial = myMaterial;
+	return true;
+}
+
+void XZ_Rect::BuildAABB()
+{
+	const Vector3f min(x0, k - 0.0001f, z0);
+	const Vector3f max(x1, k + 0.0001f, z1);
+	myAABB = AABBFromPoints(min, max);
+}
+
+bool YZ_Rect::Hit(const Ray& aRay, float aMinT, float aMaxT, RayHit& aHitRecord) const
+{
+	float t = (k - aRay.myPosition.x) / aRay.myDirection.x;
+	if (t < aMinT || t > aMaxT)
+		return false;
+
+	float y = aRay.myPosition.y + t * aRay.myDirection.y;
+	float z = aRay.myPosition.z + t * aRay.myDirection.z;
+	if (y < y0 || y > y1 || z < z0 || z > z1)
+		return false;
+
+	aHitRecord.myT = t;
+	aHitRecord.myPosition = aRay.PositionAt(t);
+	aHitRecord.SetFaceNormal(aRay, { 0.f, 0.f, 1.f });
+	aHitRecord.myMaterial = myMaterial;
+	return true;
+}
+
+void YZ_Rect::BuildAABB()
+{
+	const Vector3f min(k - 0.0001f, y0, z0);
+	const Vector3f max(k + 0.0001f, y1, z1);
+	myAABB = AABBFromPoints(min, max);
+}
+
+Box::Box(const Vector3f& aMinPoint, const Vector3f& aMaxPoint, const Material& aMaterial)
+	: Hitable(aMaterial), myMin(aMinPoint), myMax(aMaxPoint)
+{
+	myXY0 = XY_Rect(myMin.x, myMax.x, myMin.y, myMax.y, myMax.z, myMaterial);
+	myXY1 = XY_Rect(myMin.x, myMax.x, myMin.y, myMax.y, myMin.z, myMaterial);
+
+	myXZ0 = XZ_Rect(myMin.x, myMax.x, myMin.z, myMax.z, myMax.y, myMaterial);
+	myXZ1 = XZ_Rect(myMin.x, myMax.x, myMin.z, myMax.z, myMin.y, myMaterial);
+
+	myYZ0 = YZ_Rect(myMin.y, myMax.y, myMin.z, myMax.z, myMax.x, myMaterial);
+	myYZ1 = YZ_Rect(myMin.y, myMax.y, myMin.z, myMax.z, myMin.x, myMaterial);
+}
+
+bool Box::Hit(const Ray& aRay, float aMinT, float aMaxT, RayHit& aHitRecord) const
+{
+	bool hitAnything = false;
+	for (const Hitable* side : mySides)
+	{
+		if (side->Hit(aRay, aMinT, aMaxT, aHitRecord))
+			hitAnything = true;
+	}
+
+	return hitAnything;
+}
+
+void Box::BuildAABB()
+{
+	myAABB = AABBFromPoints(myMin, myMax);
+
+	mySides.RemoveAll();
+	mySides.Add(&myXY0);
+	mySides.Add(&myXY1);
+
+	mySides.Add(&myXZ0);
+	mySides.Add(&myXZ1);
+
+	mySides.Add(&myYZ0);
+	mySides.Add(&myYZ1);
+}
+
 //////////////////////////////////////////////////////////////////////////
 
 
@@ -314,6 +404,21 @@ void CollisionWorld::AddObject(const XY_Rect& aRect)
 	myXYRects.Add(aRect);
 }
 
+void CollisionWorld::AddObject(const XZ_Rect& aRect)
+{
+	myXZRects.Add(aRect);
+}
+
+void CollisionWorld::AddObject(const YZ_Rect& aRect)
+{
+	myYZRects.Add(aRect);
+}
+
+void CollisionWorld::AddObject(const Box& aBox)
+{
+	myBoxes.Add(aBox);
+}
+
 bool CollisionWorld::CastRay(const Ray& aRay, RayHit& aOutHit) const
 {
 #if 1
@@ -352,6 +457,24 @@ void CollisionWorld::BuildOctree()
 		rect.BuildAABB();
 		myOctree.AddHitable(&rect);
 	}
+
+	for (XZ_Rect& rect : myXZRects)
+	{
+		rect.BuildAABB();
+		myOctree.AddHitable(&rect);
+	}
+
+	for (YZ_Rect& rect : myYZRects)
+	{
+		rect.BuildAABB();
+		myOctree.AddHitable(&rect);
+	}
+
+	for (Box& box : myBoxes)
+	{
+		box.BuildAABB();
+		myOctree.AddHitable(&box);
+	}
 }
 
 void CollisionWorld::ClearOctree()
@@ -364,4 +487,7 @@ void CollisionWorld::ClearWorld()
 	ClearOctree();
 	mySpheres.RemoveAll();
 	myXYRects.RemoveAll();
+	myXZRects.RemoveAll();
+	myYZRects.RemoveAll();
+	myBoxes.RemoveAll();
 }

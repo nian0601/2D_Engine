@@ -50,14 +50,18 @@ private:
 		// Camera Parameters
 		Vector3f myLookFrom;
 		Vector3f myLookAt;
-		Vector3f myUp;
+		Vector3f myUp = Vector3f(0.f, 1.f, 0.f);
 		float myAperature = 0.1f;
 		float myDistToFocus = 10.f;
 		float myVFov = 20.f;
+		float myAspectRatio = 16.f / 9.f;
 	};
 
 	void BuildRandomScene();
 	void BuildSimpleLightScene();
+	void BuildCornellBoxScene();
+	void BuildFinalBoxScene();
+	void BuildRandomSceneV2();
 
 	Vector3f CastRay(Ray& aRay, const CollisionWorld& aWorld, int aDepth);
 
