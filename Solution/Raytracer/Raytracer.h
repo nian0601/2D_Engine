@@ -5,10 +5,11 @@
 #include "FW_Vector3.h"
 #include <FW_Math.h>
 #include <FW_Time.h>
+#include <FW_Threading.h>
 
 #include "Structs.h"
 #include "Collision.h"
-#include <FW_Threading.h>
+#include "ImageRenderer.h"
 
 namespace std
 {
@@ -23,6 +24,10 @@ public:
 	bool Run() override;
 
 	void BuildGameImguiEditor(unsigned int aGameOffscreenBufferTextureID) override;
+	void BuildIdleStateUI();
+	void BuildRenderingImageStateUI();
+	void BuildRenderingVideoStateUI();
+
 
 	const char* GetGameName() override { return "Raytracer"; }
 	const char* GetDataFolderName() override { return "Raytracer"; }
@@ -31,30 +36,10 @@ private:
 	enum RendererState
 	{
 		IDLE,
-		START_RENDERING,
+		START_RENDERING_IMAGE,
 		RENDERING_IMAGE,
-	};
-
-	struct RenderingParameters
-	{
-		int myImageWidth;
-		int mySamplesPerPixel;
-		int myMaxBounces;
-		int myNumberOfThreads;
-
-		Vector3f myBackgroundColor;
-		bool myUseFlatBackground;
-
-		//int mySceneToRender;
-
-		// Camera Parameters
-		Vector3f myLookFrom;
-		Vector3f myLookAt;
-		Vector3f myUp = Vector3f(0.f, 1.f, 0.f);
-		float myAperature = 0.1f;
-		float myDistToFocus = 10.f;
-		float myVFov = 20.f;
-		float myAspectRatio = 16.f / 9.f;
+		START_RENDERING_VIDEO,
+		RENDERING_VIDEO,
 	};
 
 	void BuildRandomScene();
@@ -63,43 +48,34 @@ private:
 	void BuildFinalBoxScene();
 	void BuildRandomSceneV2();
 
-	Vector3f CastRay(Ray& aRay, const CollisionWorld& aWorld, int aDepth);
+	void UpdateStartRenderingImageState();
+	void UpdateRenderingImageState();
 
-	void ClearImage();
-	void UpdatePixelsInRow(int aRowNumber);
-	void UpdatePixelsInRow(int aRowNumber, FW_GrowingArray<unsigned int>& aOutPixelArray);
-	void PrintEntireImage();
+	void UpdateStartRenderingVideoState();
+	void UpdateRenderingVideoState();
 
+	void PrepareTextureForRender();
 	void TryUpdateRenderTexture();
 	bool TryToFinalizeTexture();
 
-	void ThreadUpdateFunction();
-	void StopAllThreads();
+	void SaveSceneToDisk();
+	void LoadSceneFromDisk();
 
-	void UpdateStartRenderingState();
-	void UpdateRenderingState();
-
-	void BuildIdleStateUI();
-	void BuildRenderingStateUI();
-
-
-	int PackColor(const Vector3f& aColor, int aSamplesPerPixels);
-	int PackColor(const Vector3f& aColor);
 	FW_Renderer::Texture myTexture;
 	FW_GrowingArray<unsigned int> myTexturePixels;
-
-	Camera myCamera;
-	volatile int myRowToCalculate;
-
-	CollisionWorld myWorld;
-	FW_Time::TimeUnit myStartTime;
 	FW_Time::TimeUnit myLastRenderTextureUpdateTime;
 
-	FW_Mutex myRenderTextureMutex;
-	FW_GrowingArray<std::thread*> myTextureBuildingThreads;
-	volatile bool myShouldStopThreads = false;
-	volatile int myRunningThreadCount = 0;
+	CollisionWorld myWorld;
+	Camera myCamera;
+	RenderingParameters myRenderingParameters;
 
 	RendererState myCurrentState;
-	RenderingParameters myRenderingParameters;
+	ImageRenderer* myImageRenderer;
+
+	int myVideoFrameToRender;
+	int myNumVideoFramesToRender = 10;
+	int myFPS = 24;
+	float myDeltaTime = 1.f / 24.f;
+	float myAverageTimePerVideoFrame = 1.f;
+	FW_Time::TimeUnit myVideoRenderStartTime;
 };

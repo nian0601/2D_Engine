@@ -5,10 +5,12 @@
     <ClInclude Include="Collision.h" />
     <ClInclude Include="Structs.h" />
     <ClInclude Include="Materials.h" />
+    <ClInclude Include="ImageRenderer.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Raytracer.cpp" />
     <ClCompile Include="Collision.cpp" />
     <ClCompile Include="Materials.cpp" />
+    <ClCompile Include="ImageRenderer.cpp" />
   </ItemGroup>
 </Project>

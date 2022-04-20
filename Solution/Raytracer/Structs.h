@@ -3,6 +3,26 @@
 #include <FW_Math.h>
 #include <FW_String.h>
 
+struct FloatInterpolator
+{
+	FloatInterpolator()
+	{
+		myAccumulator = FW_RandFloat(0.f, 1000.f);
+	}
+
+	void Tick(float aDeltaTime)
+	{
+		myAccumulator += mySpeed * aDeltaTime;
+		myValue = FW_Lerp(0.5f, 2.f, abs(sin(myAccumulator)));
+	}
+
+	float myValue = 1.f;
+
+	float mySpeed = 1.f;
+	float myAccumulator = 0.f;
+};
+
+
 struct Material
 {
 	enum MaterialType
@@ -16,6 +36,7 @@ struct Material
 	Vector3f myColor = { 1.f, 1.f, 1.f };
 	int myMaterialType = Lambertian;
 	float myMaterialParameter = 1.f;
+	FloatInterpolator myInterpolator;
 
 	static Material MakeLambertian(const Vector3f& aColor)
 	{
@@ -153,11 +174,35 @@ struct Camera
 		myLensRadius = aAperature * 0.5f;
 	}
 
-	Ray GetRay(float s, float t)
+	Ray GetRay(float s, float t) const
 	{
 		Vector3f rd = myLensRadius * FW_RandomInUnitDisk();
 		Vector3f offset = myU * rd.x + myV * rd.y;
 
 		return { myPosition + offset, myLowerLeftCorner + s * myHorizontal + t * myVertical - myPosition - offset };
 	}
+};
+
+struct RenderingParameters
+{
+	int myImageWidth;
+	int mySamplesPerPixel;
+	int myMaxBounces;
+	int myNumberOfThreads;
+
+	Vector3f myBackgroundColor;
+	bool myUseFlatBackground;
+
+	// Camera Parameters
+	Vector3f myLookFrom;
+	Vector3f myLookAt;
+	Vector3f myUp = Vector3f(0.f, 1.f, 0.f);
+	float myAperature = 0.1f;
+	float myDistToFocus = 10.f;
+	float myVFov = 20.f;
+	float myAspectRatio = 16.f / 9.f;
+
+	// Video Parameters
+	float myVideoLenght = 2.f;
+	int myFPS = 24;
 };

@@ -130,12 +130,14 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Collision.h" />
+    <ClInclude Include="ImageRenderer.h" />
     <ClInclude Include="Materials.h" />
     <ClInclude Include="Raytracer.h" />
     <ClInclude Include="Structs.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Collision.cpp" />
+    <ClCompile Include="ImageRenderer.cpp" />
     <ClCompile Include="Materials.cpp" />
     <ClCompile Include="Raytracer.cpp" />
   </ItemGroup>

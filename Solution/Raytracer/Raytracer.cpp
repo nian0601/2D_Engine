@@ -6,27 +6,32 @@
 #include <thread>
 
 #include "Materials.h"
+#include "FW_FileProcessor.h"
 
 void Raytracer::OnStartup()
 {
+	myImageRenderer = nullptr;
+
 	myRenderingParameters.mySamplesPerPixel = 16;
 	myRenderingParameters.myMaxBounces = 8;
 	myRenderingParameters.myImageWidth = 480;
 	myRenderingParameters.myNumberOfThreads = 4;
 
 	// Should be able to select Scene from UI
-	//BuildRandomScene();
+	BuildRandomScene();
 	//BuildSimpleLightScene();
 	//BuildCornellBoxScene();
 	//BuildFinalBoxScene();
-	BuildRandomSceneV2();
+	//BuildRandomSceneV2();
+	//LoadSceneFromDisk();
 
 	myCurrentState = RendererState::IDLE;
 }
 
 void Raytracer::OnShutdown()
 {
-	StopAllThreads();
+	delete myImageRenderer;
+	myImageRenderer = nullptr;
 }
 
 bool Raytracer::Run()
@@ -37,11 +42,17 @@ bool Raytracer::Run()
 		// Doesnt need to do much?
 		// Handle UI in ImGUI-fuction
 		break;
-	case Raytracer::START_RENDERING:
-		UpdateStartRenderingState();
+	case Raytracer::START_RENDERING_IMAGE:
+		UpdateStartRenderingImageState();
 		break;
 	case Raytracer::RENDERING_IMAGE:
-		UpdateRenderingState();
+		UpdateRenderingImageState();
+		break;
+	case Raytracer::START_RENDERING_VIDEO:
+		UpdateStartRenderingVideoState();
+		break;
+	case RendererState::RENDERING_VIDEO:
+		UpdateRenderingVideoState();
 		break;
 	default:
 		break;
@@ -55,7 +66,7 @@ bool Raytracer::Run()
 
 void Raytracer::BuildGameImguiEditor(unsigned int aGameOffscreenBufferTextureID)
 {
-	ImGui::BeginChild(ImGui::GetID((void*)(intptr_t)55), ImVec2(350, 400), false);
+	ImGui::BeginChild(ImGui::GetID((void*)(intptr_t)55), ImVec2(350, 500), false);
 	
 	static bool showDemoWindow = false;
 	ImGui::Checkbox("Demo Window", &showDemoWindow);
@@ -71,7 +82,12 @@ void Raytracer::BuildGameImguiEditor(unsigned int aGameOffscreenBufferTextureID)
 	}
 	case Raytracer::RENDERING_IMAGE:
 	{
-		BuildRenderingStateUI();
+		BuildRenderingImageStateUI();
+		break;
+	}
+	case Raytracer::RENDERING_VIDEO:
+	{
+		BuildRenderingVideoStateUI();
 		break;
 	}
 	}
@@ -80,10 +96,348 @@ void Raytracer::BuildGameImguiEditor(unsigned int aGameOffscreenBufferTextureID)
 
 	ImGui::SameLine();
 
+	ImGui::BeginChild(ImGui::GetID((void*)(intptr_t)56), ImVec2(0, 500), false);
+
+	ImGui::BeginChild(ImGui::GetID((void*)(intptr_t)57), ImVec2(0, 20), false);
+	ImGui::Indent(30.f);
+	if (ImGui::Button("Render Frame"))
+	{
+
+	}
+
+	ImGui::SameLine();
+	ImGui::Indent(200.f);
+	if (ImGui::Button("Render Video"))
+	{
+
+	}
+	ImGui::EndChild();
+
+
 	const float imageWidth = 720.f;
 	const float imageHeight = imageWidth / myRenderingParameters.myAspectRatio;
 	ImGui::Image(aGameOffscreenBufferTextureID, ImVec2(imageWidth, imageHeight), ImVec2(0, 1), ImVec2(1, 0));
+
+	ImGui::EndChild();
 }
+
+void Raytracer::BuildIdleStateUI()
+{
+	ImGui::BeginChild(ImGui::GetID((void*)(intptr_t)456), ImVec2(0, -20), false);
+
+	ImGuiTabBarFlags tab_bar_flags = ImGuiTabBarFlags_None;
+	if (ImGui::BeginTabBar("MyTabBar", tab_bar_flags))
+	{
+		if (ImGui::BeginTabItem("Render Settings"))
+		{
+			if (ImGui::Button("Quick Iterations"))
+			{
+				myRenderingParameters.mySamplesPerPixel = 16;
+				myRenderingParameters.myMaxBounces = 8;
+				myRenderingParameters.myImageWidth = 480;
+				myRenderingParameters.myNumberOfThreads = 4;
+			}
+
+			if (ImGui::Button("Decent Quality"))
+			{
+				myRenderingParameters.myImageWidth = 720;
+				myRenderingParameters.mySamplesPerPixel = 100;
+				myRenderingParameters.myMaxBounces = 16;
+				myRenderingParameters.myNumberOfThreads = 4;
+			}
+
+			if (ImGui::Button("High Quality"))
+			{
+				myRenderingParameters.myImageWidth = 1920;
+				myRenderingParameters.mySamplesPerPixel = 100;
+				myRenderingParameters.myMaxBounces = 16;
+				myRenderingParameters.myNumberOfThreads = 4;
+			}
+
+			if (ImGui::Button("Highest Quality"))
+			{
+				myRenderingParameters.myImageWidth = 2560;
+				myRenderingParameters.mySamplesPerPixel = 100;
+				myRenderingParameters.myMaxBounces = 16;
+				myRenderingParameters.myNumberOfThreads = 4;
+			}
+
+			ImGui::Separator();
+
+			ImGui::DragInt("Image Width", &myRenderingParameters.myImageWidth, 1, 1, 2560);
+			ImGui::DragInt("Samples per Pixel", &myRenderingParameters.mySamplesPerPixel, 1, 1, 10000);
+			ImGui::DragInt("Max Bounces", &myRenderingParameters.myMaxBounces, 1, 1, 1000);
+			ImGui::DragInt("Threads", &myRenderingParameters.myNumberOfThreads, 1, 1, 4);
+
+			if (ImGui::Button("Render Image"))
+				myCurrentState = RendererState::START_RENDERING_IMAGE;
+
+			if (ImGui::Button("Save Result to File"))
+				FW_Renderer::SaveTextureToFile(myTexture, "test.png");
+
+			ImGui::Separator();
+
+			ImGui::DragInt("FPS", &myRenderingParameters.myFPS, 1, 1, 144);
+			ImGui::DragFloat("Time", &myRenderingParameters.myVideoLenght, 0.1f, 0.1f, 60.f);
+
+			if (ImGui::Button("Render Video"))
+				myCurrentState = RendererState::START_RENDERING_VIDEO;
+
+			ImGui::Separator();
+
+			if (ImGui::Button("Save Scene To Disk"))
+				SaveSceneToDisk();
+
+			if (ImGui::Button("Load Scene From Disk"))
+				LoadSceneFromDisk();
+
+			ImGui::EndTabItem();
+		}
+		if (ImGui::BeginTabItem("World Settings"))
+		{
+			ImGui::DragFloat3("Background Color", &myRenderingParameters.myBackgroundColor.x, 0.01f, 0.f, 1.f);
+			ImGui::Checkbox("Flat Background", &myRenderingParameters.myUseFlatBackground);
+
+			ImGui::DragFloat3("Camera Position", &myRenderingParameters.myLookFrom.x, 0.1f, -50.f, 50.f);
+			ImGui::DragFloat3("Focus Position", &myRenderingParameters.myLookAt.x, 0.1f, -50.f, 50.f);
+			ImGui::DragFloat("Focus Distance", &myRenderingParameters.myDistToFocus, 0.1f, 0.1f, 100.f);
+
+			if (ImGui::TreeNode("Objects"))
+			{
+				ImGui::BeginChild(ImGui::GetID((void*)(intptr_t)87), ImVec2(-10, 200), true);
+
+				const char* materialTypes[] = { "Lambertian", "Metallic", "Dialectrict", "Light" };
+
+				FW_GrowingArray<Sphere>& spheres = myWorld.GetAllSpheres();
+				char sphereLable[64];
+				for (int i = 0; i < spheres.Count(); ++i)
+				{
+					Sphere& sphere = spheres[i];
+
+					if (sphere.myUIName.Empty())
+						sprintf_s(sphereLable, 64, "Sphere %i", i);
+					else
+						sprintf_s(sphereLable, 64, "%s", sphere.myUIName.GetBuffer());
+
+					if (ImGui::TreeNode(sphereLable))
+					{
+						ImGui::DragFloat3("Position", &sphere.myPosition.x, 0.1f, -10.f, 10.f);
+						ImGui::DragFloat3("Color", &sphere.myMaterial.myColor.x, 0.1f, 0.f, 4.f);
+						ImGui::DragFloat("Radius", &sphere.myRadius, 1, 0.f, 100.f);
+						ImGui::Combo("Material", &sphere.myMaterial.myMaterialType, materialTypes, IM_ARRAYSIZE(materialTypes));
+
+						ImGui::DragFloat("Material Parameter", &sphere.myMaterial.myMaterialParameter, 1, 0.f, 4.f);
+
+						ImGui::TreePop();
+					}
+				}
+
+				ImGui::EndChild();
+
+				ImGui::TreePop();
+			}
+
+			if (ImGui::Button("Add Sphere"))
+			{
+				Sphere sphere;
+				sphere.myPosition = { 0.f, 0.f, 0.f };
+				sphere.myRadius = 0.5f;
+				sphere.myMaterial.myMaterialType = Material::MaterialType::Lambertian;
+				sphere.myMaterial.myMaterialParameter = 0.f;
+				sphere.myMaterial.myColor = { 1.f, 0.f, 0.f };
+
+				myWorld.AddObject(sphere);
+			}
+
+			if (ImGui::Button("Remove All"))
+			{
+				myWorld.ClearWorld();
+			}
+
+			ImGui::Spacing();
+
+			if (ImGui::Button("Load Random World"))
+				BuildRandomScene();
+
+			if (ImGui::Button("Render Image"))
+				myCurrentState = RendererState::START_RENDERING_IMAGE;
+
+			ImGui::EndTabItem();
+		}
+
+		ImGui::EndTabBar();
+	}
+
+	/*if (ImGui::CollapsingHeader("Render Settings"))
+	{
+		if (ImGui::Button("Quick Iterations"))
+		{
+			myRenderingParameters.mySamplesPerPixel = 16;
+			myRenderingParameters.myMaxBounces = 8;
+			myRenderingParameters.myImageWidth = 480;
+			myRenderingParameters.myNumberOfThreads = 4;
+		}
+
+		if (ImGui::Button("Decent Quality"))
+		{
+			myRenderingParameters.myImageWidth = 720;
+			myRenderingParameters.mySamplesPerPixel = 100;
+			myRenderingParameters.myMaxBounces = 16;
+			myRenderingParameters.myNumberOfThreads = 4;
+		}
+
+		if (ImGui::Button("High Quality"))
+		{
+			myRenderingParameters.myImageWidth = 1920;
+			myRenderingParameters.mySamplesPerPixel = 100;
+			myRenderingParameters.myMaxBounces = 16;
+			myRenderingParameters.myNumberOfThreads = 4;
+		}
+
+		if (ImGui::Button("Highest Quality"))
+		{
+			myRenderingParameters.myImageWidth = 2560;
+			myRenderingParameters.mySamplesPerPixel = 100;
+			myRenderingParameters.myMaxBounces = 16;
+			myRenderingParameters.myNumberOfThreads = 4;
+		}
+
+		ImGui::Separator();
+
+		ImGui::DragInt("Image Width", &myRenderingParameters.myImageWidth, 1, 1, 2560);
+		ImGui::DragInt("Samples per Pixel", &myRenderingParameters.mySamplesPerPixel, 1, 1, 10000);
+		ImGui::DragInt("Max Bounces", &myRenderingParameters.myMaxBounces, 1, 1, 1000);
+		ImGui::DragInt("Threads", &myRenderingParameters.myNumberOfThreads, 1, 1, 4);
+	}*/
+
+	/*if (ImGui::CollapsingHeader("World Settings"))
+	{
+		ImGui::DragFloat3("Background Color", &myRenderingParameters.myBackgroundColor.x, 0.01f, 0.f, 1.f);
+		ImGui::Checkbox("Flat Background", &myRenderingParameters.myUseFlatBackground);
+
+		ImGui::DragFloat3("Camera Position", &myRenderingParameters.myLookFrom.x, 0.1f, -50.f, 50.f);
+		ImGui::DragFloat3("Focus Position", &myRenderingParameters.myLookAt.x, 0.1f, -50.f, 50.f);
+		ImGui::DragFloat("Focus Distance", &myRenderingParameters.myDistToFocus, 0.1f, 0.1f, 100.f);
+
+		if (ImGui::TreeNode("Objects"))
+		{
+			ImGui::BeginChild(ImGui::GetID((void*)(intptr_t)87), ImVec2(-10, 200), true);
+
+			const char* materialTypes[] = { "Lambertian", "Metallic", "Dialectrict", "Light" };
+
+			FW_GrowingArray<Sphere>& spheres = myWorld.GetAllSpheres();
+			char sphereLable[64];
+			for (int i = 0; i < spheres.Count(); ++i)
+			{
+				Sphere& sphere = spheres[i];
+
+				if (sphere.myUIName.Empty())
+					sprintf_s(sphereLable, 64, "Sphere %i", i);
+				else
+					sprintf_s(sphereLable, 64, "%s", sphere.myUIName.GetBuffer());
+
+				if (ImGui::TreeNode(sphereLable))
+				{
+					ImGui::DragFloat3("Position", &sphere.myPosition.x, 0.1f, -10.f, 10.f);
+					ImGui::DragFloat3("Color", &sphere.myMaterial.myColor.x, 0.1f, 0.f, 4.f);
+					ImGui::DragFloat("Radius", &sphere.myRadius, 1, 0.f, 100.f);
+					ImGui::Combo("Material", &sphere.myMaterial.myMaterialType, materialTypes, IM_ARRAYSIZE(materialTypes));
+
+					ImGui::DragFloat("Material Parameter", &sphere.myMaterial.myMaterialParameter, 1, 0.f, 4.f);
+
+					ImGui::TreePop();
+				}
+			}
+
+			ImGui::EndChild();
+
+			ImGui::TreePop();
+		}
+
+		if (ImGui::Button("Add Sphere"))
+		{
+			Sphere sphere;
+			sphere.myPosition = { 0.f, 0.f, 0.f };
+			sphere.myRadius = 0.5f;
+			sphere.myMaterial.myMaterialType = Material::MaterialType::Lambertian;
+			sphere.myMaterial.myMaterialParameter = 0.f;
+			sphere.myMaterial.myColor = { 1.f, 0.f, 0.f };
+
+			myWorld.AddObject(sphere);
+		}
+
+		if (ImGui::Button("Remove All"))
+		{
+			myWorld.ClearWorld();
+		}
+
+		ImGui::Spacing();
+
+		if (ImGui::Button("Load Random World"))
+		{
+			BuildRandomScene();
+		}
+	}*/
+
+	ImGui::EndChild();
+
+	/*ImGui::Spacing();
+	ImGui::Separator();
+	ImGui::Spacing();
+
+	if (ImGui::Button("Render Image"))
+		myCurrentState = RendererState::START_RENDERING_IMAGE;
+
+	if (ImGui::Button("Save Result to File"))
+		FW_Renderer::SaveTextureToFile(myTexture, "test.png");
+
+	ImGui::Separator();
+
+	ImGui::DragInt("FPS", &myRenderingParameters.myFPS, 1, 1, 144);
+	ImGui::DragFloat("Time", &myRenderingParameters.myVideoLenght, 0.1f, 0.1f, 60.f);
+
+	if (ImGui::Button("Render Video"))
+		myCurrentState = RendererState::START_RENDERING_VIDEO;
+
+	ImGui::Separator();
+
+	if (ImGui::Button("Save Scene To Disk"))
+		SaveSceneToDisk();
+
+	if (ImGui::Button("Load Scene From Disk"))
+		LoadSceneFromDisk();*/
+}
+
+void Raytracer::BuildRenderingImageStateUI()
+{
+	if (ImGui::Button("Stop Render"))
+	{
+		delete myImageRenderer;
+		myImageRenderer = nullptr;
+
+		myCurrentState = RendererState::IDLE;
+	}
+}
+
+void Raytracer::BuildRenderingVideoStateUI()
+{
+	if (ImGui::Button("Stop Render"))
+	{
+		delete myImageRenderer;
+		myImageRenderer = nullptr;
+
+		myCurrentState = RendererState::IDLE;
+	}
+
+	float progress = myVideoFrameToRender / static_cast<float>(myNumVideoFramesToRender);
+	float elapsedTime = FW_Time::ConvertTimeUnitToGameTime(FW_Time::GetTime() - myVideoRenderStartTime);
+
+	ImGui::Text("%i/%i Finished (%.2f%%)", myVideoFrameToRender, myNumVideoFramesToRender, progress * 100.f);
+	ImGui::Text("Time: %.1fs", elapsedTime);
+	ImGui::Text("Estimated Remaining: %.1fs", (myAverageTimePerVideoFrame * myNumVideoFramesToRender) - elapsedTime);
+}
+
+//////////////////////////////////////////////////////////////////////////
 
 void Raytracer::BuildRandomScene()
 {
@@ -119,6 +473,7 @@ void Raytracer::BuildRandomScene()
 	metal.myUIName = "Metal";
 	myWorld.AddObject(metal);
 
+	int sphereCount = 1;
 	for (int a = -11; a < 11; ++a)
 	{
 		for (int b = -11; b < 11; ++b)
@@ -146,7 +501,11 @@ void Raytracer::BuildRandomScene()
 
 				Sphere sphere(center, 0.2f);
 				sphere.myMaterial = material;
+
+				sphere.myUIName = "Saved Sphere ";
+				sphere.myUIName += sphereCount;
 				myWorld.AddObject(sphere);
+				++sphereCount;
 			}
 		}
 	}
@@ -307,6 +666,11 @@ void Raytracer::BuildRandomSceneV2()
 	metal.myUIName = "Metal";
 	myWorld.AddObject(metal);
 
+	Sphere light({ 0.f, 10.f, 0.f }, 3.f);
+	light.myMaterial = Material::MakeLight({ 1.f, 1.f, 1.f });
+	light.myUIName = "SkyLight";
+	myWorld.AddObject(light);
+
 	for (int a = -11; a < 11; ++a)
 	{
 		for (int b = -11; b < 11; ++b)
@@ -322,7 +686,8 @@ void Raytracer::BuildRandomSceneV2()
 				if (chooseMaterial < 0.1f)
 				{
 					float intensity = FW_RandFloat(2.f, 4.f);
-					material = Material::MakeLight({ intensity, intensity, intensity });
+					Vector3f color = FW_RandomVector3f(0.3f, 1.f);
+					material = Material::MakeLight(color * intensity);
 				}
 				else if (chooseMaterial < 0.8f)
 				{
@@ -345,182 +710,12 @@ void Raytracer::BuildRandomSceneV2()
 	}
 }
 
-Vector3f Raytracer::CastRay(Ray& aRay, const CollisionWorld& aWorld, int aDepth)
+//////////////////////////////////////////////////////////////////////////
+
+void Raytracer::UpdateStartRenderingImageState()
 {
-	if (aDepth <= 0)
-		return { 0.f, 0.f, 0.f };
+	PrepareTextureForRender();
 
-	RayHit hitRecord;
-	if (!aWorld.CastRay(aRay, hitRecord))
-	{
-		if (myRenderingParameters.myUseFlatBackground)
-			return myRenderingParameters.myBackgroundColor;
-
-		Vector3f dir = GetNormalized(aRay.myDirection);
-		float t = 0.5f * (dir.y + 1.f);
-
-		return (1.f - t) * Vector3f(1.f, 1.f, 1.f) + t * Vector3f(0.5f, 0.7f, 1.f);
-	}
-
-	Ray scatteredRay;
-	Vector3f attenuation;
-	Vector3f emitted = Materials::EmitFromHit(hitRecord);
-
-	if (!Materials::ScatterRay(aRay, hitRecord, attenuation, scatteredRay))
-		return emitted;
-
-	return emitted + attenuation * CastRay(scatteredRay, aWorld, aDepth - 1);
-}
-
-void Raytracer::ClearImage()
-{
-	for (int y = 0; y < myTexture.mySize.y; ++y)
-	{
-		for (int x = 0; x < myTexture.mySize.x; ++x)
-		{
-			int pixelIndex = y * myTexture.mySize.x + x;
-			myTexturePixels[pixelIndex] = PackColor({ 1.f, 1.f, 1.f });
-		}
-	}
-	FW_Renderer::UpdatePixelsInTexture(myTexture, myTexturePixels.GetArrayAsPointer());
-}
-
-void Raytracer::UpdatePixelsInRow(int aRowNumber)
-{
-	for (int x = 0; x < myTexture.mySize.x; ++x)
-	{
-		Vector3f pixelColor;
-		for (int i = 0; i < myRenderingParameters.mySamplesPerPixel; ++i)
-		{
-			float u = float(x + FW_RandFloat()) / (myTexture.mySize.x - 1);
-			float v = float(aRowNumber + FW_RandFloat()) / (myTexture.mySize.y - 1);
-
-			Ray ray = myCamera.GetRay(u, v);
-			pixelColor += CastRay(ray, myWorld, myRenderingParameters.myMaxBounces);
-		}
-
-		int pixelIndex = aRowNumber * myTexture.mySize.x + x;
-		myTexturePixels[pixelIndex] = PackColor(pixelColor, myRenderingParameters.mySamplesPerPixel);
-	}
-}
-
-void Raytracer::UpdatePixelsInRow(int aRowNumber, FW_GrowingArray<unsigned int>& aOutPixelArray)
-{
-	for (int x = 0; x < myTexture.mySize.x; ++x)
-	{
-		Vector3f pixelColor;
-		for (int i = 0; i < myRenderingParameters.mySamplesPerPixel; ++i)
-		{
-			if (myShouldStopThreads)
-				return;
-
-			float u = float(x + FW_RandFloat()) / (myTexture.mySize.x - 1);
-			float v = float(aRowNumber + FW_RandFloat()) / (myTexture.mySize.y - 1);
-
-			Ray ray = myCamera.GetRay(u, v);
-			pixelColor += CastRay(ray, myWorld, myRenderingParameters.myMaxBounces);
-		}
-
-		aOutPixelArray[x] = PackColor(pixelColor, myRenderingParameters.mySamplesPerPixel);
-	}
-}
-
-void Raytracer::PrintEntireImage()
-{
-	for (int y = 0; y < myTexture.mySize.y; ++y)
-		UpdatePixelsInRow(y);
-
-	FW_Renderer::UpdatePixelsInTexture(myTexture, myTexturePixels.GetArrayAsPointer());
-}
-
-void Raytracer::TryUpdateRenderTexture()
-{
-	FW_Time::TimeUnit currentTime = FW_Time::GetTime();
-	float duration = FW_Time::ConvertTimeUnitToGameTime(currentTime - myLastRenderTextureUpdateTime);
-
-	if (duration >= 1.f)
-	{
-		FW_ReadLock lock(myRenderTextureMutex);
-
-		myLastRenderTextureUpdateTime = FW_Time::GetTime();
-		FW_Renderer::UpdatePixelsInTexture(myTexture, myTexturePixels.GetArrayAsPointer());
-	}
-}
-
-bool Raytracer::TryToFinalizeTexture()
-{
-	if (myRunningThreadCount <= 0)
-	{
-		FW_Renderer::UpdatePixelsInTexture(myTexture, myTexturePixels.GetArrayAsPointer());
-
-		FW_Time::TimeUnit endTime = FW_Time::GetTime();
-		float duration = FW_Time::ConvertTimeUnitToGameTime(endTime - myStartTime);
-
-		FW_String message = "It took ";
-		message += duration;
-		message += "s to render";
-		FW_Logger::AddMessage(message.GetBuffer());
-
-		StopAllThreads();
-		return true;
-	}
-
-	return false;
-}
-
-void Raytracer::ThreadUpdateFunction()
-{
-	++myRunningThreadCount;
-	FW_GrowingArray<unsigned int> temporaryPixels;
-	for (int x = 0; x < myTexture.mySize.x; ++x)
-		temporaryPixels.Add(0);
-
-	int rowToUpdate = myRowToCalculate++;
-	while (rowToUpdate < myTexture.mySize.y && myShouldStopThreads == false)
-	{
-		UpdatePixelsInRow(rowToUpdate, temporaryPixels);
-
-		{
-			FW_ReadWriteLock lock(myRenderTextureMutex);
-			for (int x = 0; x < myTexture.mySize.x; ++x)
-			{
-				int pixelIndex = rowToUpdate * myTexture.mySize.x + x;
-				myTexturePixels[pixelIndex] = temporaryPixels[x];
-			}
-		}
-
-		rowToUpdate = myRowToCalculate++;
-	}
-
-	--myRunningThreadCount;
-}
-
-void Raytracer::StopAllThreads()
-{
-	myShouldStopThreads = true;
-
-	for (std::thread* thread : myTextureBuildingThreads)
-		thread->join();
-
-	myTextureBuildingThreads.DeleteAll();
-}
-
-void Raytracer::UpdateStartRenderingState()
-{
-	// All of this should come from UI
-	const int imageWidth = myRenderingParameters.myImageWidth;
-	const int imageHeight = static_cast<int>(imageWidth / myRenderingParameters.myAspectRatio);
-	SFML_Renderer::ResizeOffscreenBuffer(imageWidth, myRenderingParameters.myAspectRatio);
-
-	FW_Renderer::DeleteTexture(myTexture);
-	myTexture = FW_Renderer::CreateTexture({ imageWidth, imageHeight });
-
-	myTexturePixels.RemoveAll();
-	myTexturePixels.Reserve(myTexture.mySize.x * myTexture.mySize.y);
-
-	ClearImage();
-
-	// Camera parameters should also be configurable through UI
 	myCamera.Setup(
 		myRenderingParameters.myLookFrom,
 		myRenderingParameters.myLookAt,
@@ -533,22 +728,12 @@ void Raytracer::UpdateStartRenderingState()
 	myWorld.ClearOctree();
 	myWorld.BuildOctree();
 
-	myRowToCalculate = 0;
-	myStartTime = FW_Time::GetTime();
-	myLastRenderTextureUpdateTime = myStartTime;
-
-	myShouldStopThreads = false;
-	myRunningThreadCount = 0;
-	myTextureBuildingThreads.DeleteAll();
-	for (int i = 0; i < myRenderingParameters.myNumberOfThreads; ++i)
-	{
-		myTextureBuildingThreads.Add(new std::thread([this]() {ThreadUpdateFunction(); }));
-	}
-
+	myImageRenderer = new ImageRenderer(myCamera, myWorld, myRenderingParameters, myTexture.mySize.x, myTexture.mySize.y);
+	myLastRenderTextureUpdateTime = myImageRenderer->GetStartTime();
 	myCurrentState = RendererState::RENDERING_IMAGE;
 }
 
-void Raytracer::UpdateRenderingState()
+void Raytracer::UpdateRenderingImageState()
 {
 	TryUpdateRenderTexture();
 
@@ -558,164 +743,214 @@ void Raytracer::UpdateRenderingState()
 	}
 }
 
-void Raytracer::BuildIdleStateUI()
+void Raytracer::UpdateStartRenderingVideoState()
 {
-	ImGui::BeginChild(ImGui::GetID((void*)(intptr_t)456), ImVec2(0, -60), false);
+	PrepareTextureForRender();
 
-	if (ImGui::CollapsingHeader("Render Settings"))
+	myVideoFrameToRender = 0;
+	myDeltaTime = 1.f / myRenderingParameters.myFPS;
+	myNumVideoFramesToRender = static_cast<int>(myRenderingParameters.myFPS * myRenderingParameters.myVideoLenght);
+	myLastRenderTextureUpdateTime = FW_Time::GetTime();
+	myVideoRenderStartTime = FW_Time::GetTime();
+	myCurrentState = RendererState::RENDERING_VIDEO;
+
+	myWorld.ClearOctree();
+	myWorld.BuildOctree();
+}
+
+void Raytracer::UpdateRenderingVideoState()
+{
+	// If we have a ImageRenderer that means we're currently rendering a frame
+	if (myImageRenderer)
 	{
-		if (ImGui::Button("Quick Iterations"))
+		TryUpdateRenderTexture();
+
+		if (TryToFinalizeTexture())
 		{
-			myRenderingParameters.mySamplesPerPixel = 16;
-			myRenderingParameters.myMaxBounces = 8;
-			myRenderingParameters.myImageWidth = 480;
-			myRenderingParameters.myNumberOfThreads = 4;
+			FW_String filename = "Video/frame";
+			filename += myVideoFrameToRender;
+			filename += ".png";
+			FW_Renderer::SaveTextureToFile(myTexture, filename.GetRawBuffer());
+			++myVideoFrameToRender;
+
+			float elapsedTime = FW_Time::ConvertTimeUnitToGameTime(FW_Time::GetTime() - myVideoRenderStartTime);
+			myAverageTimePerVideoFrame = elapsedTime / myVideoFrameToRender;
 		}
-
-		if (ImGui::Button("Decent Quality"))
-		{
-			myRenderingParameters.myImageWidth = 720;
-			myRenderingParameters.mySamplesPerPixel = 100;
-			myRenderingParameters.myMaxBounces = 16;
-			myRenderingParameters.myNumberOfThreads = 4;
-		}
-
-		if (ImGui::Button("High Quality"))
-		{
-			myRenderingParameters.myImageWidth = 1920;
-			myRenderingParameters.mySamplesPerPixel = 100;
-			myRenderingParameters.myMaxBounces = 16;
-			myRenderingParameters.myNumberOfThreads = 4;
-		}
-
-		if (ImGui::Button("Highest Quality"))
-		{
-			myRenderingParameters.myImageWidth = 2560;
-			myRenderingParameters.mySamplesPerPixel = 100;
-			myRenderingParameters.myMaxBounces = 16;
-			myRenderingParameters.myNumberOfThreads = 4;
-		}
-
-		ImGui::Separator();
-
-		ImGui::DragInt("Image Width", &myRenderingParameters.myImageWidth, 1, 1, 2560);
-		ImGui::DragInt("Samples per Pixel", &myRenderingParameters.mySamplesPerPixel, 1, 1, 10000);
-		ImGui::DragInt("Max Bounces", &myRenderingParameters.myMaxBounces, 1, 1, 1000);
-		ImGui::DragInt("Threads", &myRenderingParameters.myNumberOfThreads, 1, 1, 4);
 	}
-	if (ImGui::CollapsingHeader("World Settings"))
+	else
 	{
-		ImGui::DragFloat3("Background Color", &myRenderingParameters.myBackgroundColor.x, 0.01f, 0.f, 1.f);
-		ImGui::Checkbox("Flat Background", &myRenderingParameters.myUseFlatBackground);
-
-		ImGui::DragFloat3("Camera Position", &myRenderingParameters.myLookFrom.x, 0.1f, -50.f, 50.f);
-		ImGui::DragFloat3("Focus Position", &myRenderingParameters.myLookAt.x, 0.1f, -50.f, 50.f);
-		ImGui::DragFloat("Focus Distance", &myRenderingParameters.myDistToFocus, 0.1f, 0.1f, 100.f);
-
-		if (ImGui::TreeNode("Objects"))
+		if (myVideoFrameToRender >= myNumVideoFramesToRender)
 		{
-			ImGui::BeginChild(ImGui::GetID((void*)(intptr_t)87), ImVec2(-10, 200), true);
+			myCurrentState = RendererState::IDLE;
+		}
+		else
+		{
+			myRenderingParameters.myLookFrom.y -= 0.5f * myDeltaTime;
 
-			const char* materialTypes[] = { "Lambertian", "Metallic", "Dialectrict", "Light" };
+			myCamera.Setup(
+				myRenderingParameters.myLookFrom,
+				myRenderingParameters.myLookAt,
+				myRenderingParameters.myUp,
+				myRenderingParameters.myVFov,
+				myRenderingParameters.myAspectRatio,
+				myRenderingParameters.myAperature,
+				myRenderingParameters.myDistToFocus);
+
+			//myWorld.ClearOctree();
+			//myWorld.BuildOctree();
 
 			FW_GrowingArray<Sphere>& spheres = myWorld.GetAllSpheres();
-			char sphereLable[64];
-			for (int i = 0; i < spheres.Count(); ++i)
+			for (Sphere& sphere : spheres)
 			{
-				Sphere& sphere = spheres[i];
-
-				if(sphere.myUIName.Empty())
-					sprintf_s(sphereLable, 64, "Sphere %i", i);
-				else
-					sprintf_s(sphereLable, 64, "%s", sphere.myUIName.GetBuffer());
-
-				if (ImGui::TreeNode(sphereLable))
+				if (sphere.myMaterial.myMaterialType == Material::MaterialType::LightSource)
 				{
-					ImGui::DragFloat3("Position", &sphere.myPosition.x, 0.1f, -10.f, 10.f);
-					ImGui::DragFloat3("Color", &sphere.myMaterial.myColor.x, 0.1f, 0.f, 4.f);
-					ImGui::DragFloat("Radius", &sphere.myRadius, 1, 0.f, 100.f);
-					ImGui::Combo("Material", &sphere.myMaterial.myMaterialType, materialTypes, IM_ARRAYSIZE(materialTypes));
-
-					ImGui::DragFloat("Material Parameter", &sphere.myMaterial.myMaterialParameter, 1, 0.f, 4.f);
-
-					ImGui::TreePop();
+					sphere.myMaterial.myInterpolator.Tick(myDeltaTime);
 				}
 			}
 
-			ImGui::EndChild();
-
-			ImGui::TreePop();
-		}
-
-		if (ImGui::Button("Add Sphere"))
-		{
-			Sphere sphere;
-			sphere.myPosition = { 0.f, 0.f, 0.f };
-			sphere.myRadius = 0.5f;
-			sphere.myMaterial.myMaterialType = Material::MaterialType::Lambertian;
-			sphere.myMaterial.myMaterialParameter = 0.f;
-			sphere.myMaterial.myColor = { 1.f, 0.f, 0.f };
-
-			myWorld.AddObject(sphere);
-		}
-
-		if (ImGui::Button("Remove All"))
-		{
-			myWorld.ClearWorld();
-		}
-
-		ImGui::Spacing();
-
-		if (ImGui::Button("Load Random World"))
-		{
-			BuildRandomScene();
+			myImageRenderer = new ImageRenderer(myCamera, myWorld, myRenderingParameters, myTexture.mySize.x, myTexture.mySize.y);
 		}
 	}
-
-	ImGui::EndChild();
-
-	ImGui::Spacing();
-	ImGui::Separator();
-	ImGui::Spacing();
-
-	if (ImGui::Button("Start Render"))
-		myCurrentState = RendererState::START_RENDERING;
-
-	if (ImGui::Button("Save Result to File"))
-		FW_Renderer::SaveTextureToFile(myTexture, "test.png");
 }
 
-void Raytracer::BuildRenderingStateUI()
+void Raytracer::PrepareTextureForRender()
 {
-	if (ImGui::Button("Stop Render"))
+	const int imageWidth = myRenderingParameters.myImageWidth;
+	const int imageHeight = static_cast<int>(imageWidth / myRenderingParameters.myAspectRatio);
+	FW_Renderer::ResizeOffscreenBuffer(imageWidth, myRenderingParameters.myAspectRatio);
+
+	FW_Renderer::DeleteTexture(myTexture);
+	myTexture = FW_Renderer::CreateTexture({ imageWidth, imageHeight });
+
+	myTexturePixels.RemoveAll();
+	myTexturePixels.Reserve(myTexture.mySize.x * myTexture.mySize.y);
+
+	for (int y = 0; y < myTexture.mySize.y; ++y)
 	{
-		StopAllThreads();
-		myCurrentState = RendererState::IDLE;
+		for (int x = 0; x < myTexture.mySize.x; ++x)
+		{
+			int pixelIndex = y * myTexture.mySize.x + x;
+			myTexturePixels[pixelIndex] = 0xFFFFFFFF;
+		}
+	}
+	FW_Renderer::UpdatePixelsInTexture(myTexture, myTexturePixels.GetArrayAsPointer());
+}
+
+void Raytracer::TryUpdateRenderTexture()
+{
+	FW_Time::TimeUnit currentTime = FW_Time::GetTime();
+	float duration = FW_Time::ConvertTimeUnitToGameTime(currentTime - myLastRenderTextureUpdateTime);
+
+	if (duration >= 1.f)
+	{
+		myImageRenderer->CopyCurrentImageState(myTexturePixels);
+		myLastRenderTextureUpdateTime = FW_Time::GetTime();
+		FW_Renderer::UpdatePixelsInTexture(myTexture, myTexturePixels.GetArrayAsPointer());
 	}
 }
 
-int Raytracer::PackColor(const Vector3f& aColor, int aSamplesPerPixels)
+bool Raytracer::TryToFinalizeTexture()
 {
-	const float scale = 1.f / aSamplesPerPixels;
-	const float r = sqrt(aColor.x * scale);
-	const float g = sqrt(aColor.y * scale);
-	const float b = sqrt(aColor.z * scale);
+	if (myImageRenderer->IsFinished())
+	{
+		myImageRenderer->CopyCurrentImageState(myTexturePixels);
+		FW_Renderer::UpdatePixelsInTexture(myTexture, myTexturePixels.GetArrayAsPointer());
 
-	int color = 0;
-	color |= unsigned char(FW_Clamp(r, 0.f, 0.999f) * 255.99f) << 0;
-	color |= unsigned char(FW_Clamp(g, 0.f, 0.999f) * 255.99f) << 8;
-	color |= unsigned char(FW_Clamp(b, 0.f, 0.999f) * 255.99f) << 16;
-	color |= 255 << 24;
-	return color;
+		FW_Time::TimeUnit endTime = FW_Time::GetTime();
+		float duration = FW_Time::ConvertTimeUnitToGameTime(endTime - myImageRenderer->GetStartTime());
+
+		FW_String message;
+		if (myCurrentState == RENDERING_IMAGE)
+		{
+			message = "Image took ";
+		}
+		else if (myCurrentState == RENDERING_VIDEO)
+		{
+			message = "Frame ";
+			message += myVideoFrameToRender + 1;
+			message += " took ";
+		}
+
+		message += duration;
+		message += "s to render";
+		FW_Logger::AddMessage(message.GetBuffer());
+
+		delete myImageRenderer;
+		myImageRenderer = nullptr;
+
+		return true;
+	}
+
+	return false;
 }
 
-int Raytracer::PackColor(const Vector3f& aColor)
+void Raytracer::SaveSceneToDisk()
 {
-	int color = 0;
-	color |= unsigned char(aColor.x * 255.99f) << 0;
-	color |= unsigned char(aColor.y * 255.99f) << 8;
-	color |= unsigned char(aColor.z * 255.99f) << 16;
-	color |= 255 << 24;
-	return color;
+	FW_FileProcessor file("Raytracer/Data/Scene.txt", FW_FileProcessor::Flags::WRITE);
+
+	file.Process(myRenderingParameters.myBackgroundColor);
+	file.Process(myRenderingParameters.myUseFlatBackground);
+
+	// Camera Parameters
+	file.Process(myRenderingParameters.myLookFrom);
+	file.Process(myRenderingParameters.myLookAt);
+	file.Process(myRenderingParameters.myUp);
+	file.Process(myRenderingParameters.myAperature);
+	file.Process(myRenderingParameters.myDistToFocus);
+	file.Process(myRenderingParameters.myVFov);
+	file.Process(myRenderingParameters.myAspectRatio);
+
+	// Video Parameters
+	file.Process(myRenderingParameters.myVideoLenght);
+	file.Process(myRenderingParameters.myFPS);
+
+
+	FW_GrowingArray<Sphere>& spheres = myWorld.GetAllSpheres();
+	int numSpheres = spheres.Count();
+	file.Process(numSpheres);
+
+	for (Sphere& sphere : spheres)
+	{
+		file.Process(sphere.myMaterial);
+		file.Process(sphere.myUIName);
+		file.Process(sphere.myPosition);
+		file.Process(sphere.myRadius);
+	}
 }
 
+void Raytracer::LoadSceneFromDisk()
+{
+	myWorld.ClearWorld();
+
+	FW_FileProcessor file("Raytracer/Data/Scene.txt", FW_FileProcessor::Flags::READ);
+
+	file.Process(myRenderingParameters.myBackgroundColor);
+	file.Process(myRenderingParameters.myUseFlatBackground);
+
+	// Camera Parameters
+	file.Process(myRenderingParameters.myLookFrom);
+	file.Process(myRenderingParameters.myLookAt);
+	file.Process(myRenderingParameters.myUp);
+	file.Process(myRenderingParameters.myAperature);
+	file.Process(myRenderingParameters.myDistToFocus);
+	file.Process(myRenderingParameters.myVFov);
+	file.Process(myRenderingParameters.myAspectRatio);
+
+	// Video Parameters
+	file.Process(myRenderingParameters.myVideoLenght);
+	file.Process(myRenderingParameters.myFPS);
+
+	int numSpheres = 0;
+	file.Process(numSpheres);
+	for (int i = 0; i < numSpheres; ++i)
+	{
+		Sphere sphere;
+
+		file.Process(sphere.myMaterial);
+		file.Process(sphere.myUIName);
+		file.Process(sphere.myPosition);
+		file.Process(sphere.myRadius);
+
+		myWorld.AddObject(sphere);
+	}
+}

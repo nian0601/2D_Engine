@@ -23,7 +23,7 @@ namespace Materials_Private
 			scatterDirection = aHitRecord.myNormal;
 
 		aScatteredRay = { aHitRecord.myPosition, scatterDirection };
-		anAttenuation = aHitRecord.myMaterial.myColor;
+		anAttenuation = aHitRecord.myMaterial.myColor * aHitRecord.myMaterial.myInterpolator.myValue;
 		return true;
 	}
 
@@ -31,7 +31,7 @@ namespace Materials_Private
 	{
 		Vector3f reflected = ReflectAround(GetNormalized(aRayIn.myDirection), aHitRecord.myNormal);
 		aScatteredRay = { aHitRecord.myPosition, reflected + aHitRecord.myMaterial.myMaterialParameter * FW_RandomUnitSphereVector() };
-		anAttenuation = aHitRecord.myMaterial.myColor;
+		anAttenuation = aHitRecord.myMaterial.myColor * aHitRecord.myMaterial.myInterpolator.myValue;
 		return Dot(aScatteredRay.myDirection, aHitRecord.myNormal) > 0.f;
 	}
 
@@ -87,7 +87,7 @@ namespace Materials
 	{
 		if (aHitRecord.myMaterial.myMaterialType == Material::LightSource)
 		{
-			return aHitRecord.myMaterial.myColor;
+			return aHitRecord.myMaterial.myColor * aHitRecord.myMaterial.myInterpolator.myValue;
 		}
 		else
 		{
