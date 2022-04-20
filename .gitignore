@@ -56,3 +56,4 @@
 Pong_Shared/Pong_Shared.lib
 *.ipdb
 *.iobj
+Application/Raytracer/Data/Video
