@@ -34,6 +34,11 @@ inline int FW_RandInt(int aMin, int aMax)
 	return (rand() & (aMax - aMin + 1)) + aMin;
 }
 
+inline Vector2f FW_RandomVector2f()
+{
+	return { FW_RandFloat(), FW_RandFloat() };
+}
+
 inline Vector3f FW_RandomVector3f()
 {
 	return { FW_RandFloat(), FW_RandFloat(), FW_RandFloat() };

@@ -9,7 +9,6 @@ namespace sf
 namespace SFML_Renderer
 {
 	void Init(sf::RenderWindow* aRenderWindow);
-	void ResizeOffscreenBuffer(int aWidth, float anAspectRatio);
 	void Shutdown();
 	void SetDataFolder(const char* aFolderName);
 

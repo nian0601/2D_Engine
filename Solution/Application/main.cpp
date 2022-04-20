@@ -2,6 +2,7 @@
 #include "Breakout.h"
 #include "Pong.h"
 #include "Raytracer.h"
+#include "PhysicsPlayground.h"
 
 int main(int argc, char** argv)
 {
@@ -18,7 +19,8 @@ int main(int argc, char** argv)
 
 	//Breakout game;
 	//Pong game;
-	Raytracer game;
+	//Raytracer game;
+	PhysicsPlayground game;
 	engine.Run(game);
 
 	return 0;

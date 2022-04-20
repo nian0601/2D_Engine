@@ -7,7 +7,8 @@
 #include <SFML/Graphics/Text.hpp>
 #include <SFML/Graphics/Color.hpp>
 #include <SFML/Graphics/RectangleShape.hpp>
-#include "SFML/Graphics/RenderTexture.hpp"
+#include <SFML/Graphics/CircleShape.hpp>
+#include <SFML/Graphics/RenderTexture.hpp>
 
 #include <assert.h>
 #include <windows.h>
@@ -19,8 +20,10 @@ namespace SFML_Renderer
 	static sf::RenderTexture* ourOffscreenBuffer = nullptr;
 	static sf::Font* ourFont;
 	static sf::RectangleShape ourRectangleShape;
+	static sf::CircleShape ourCircleShape;
 	static Vector2f ourCurrentRectangleSize;
 	static sf::IntRect ourCurrentTextureRect;
+	static float ourCurrentCircleRadius = 0.f;
 
 	struct CachedTexture
 	{
@@ -60,18 +63,10 @@ namespace SFML_Renderer
 		}
 	}
 
-	void ResizeOffscreenBuffer(int aWidth, float anAspectRatio)
-	{
-		delete ourOffscreenBuffer;
-		ourOffscreenBuffer = new sf::RenderTexture();
-		ourOffscreenBuffer->create(aWidth, static_cast<int>(aWidth/ anAspectRatio));
-	}
-
 	void Init(sf::RenderWindow* aRenderWindow)
 	{
 		ourRenderWindow = aRenderWindow;
-
-		ResizeOffscreenBuffer(400, 16.f / 9.f);
+		FW_Renderer::ResizeOffscreenBuffer(400, 16.f / 9.f);
 	}
 
 	void Shutdown()
@@ -131,6 +126,13 @@ namespace FW_Renderer
 		SFML_Renderer::ourOffscreenBuffer->display();
 	}
 
+	void ResizeOffscreenBuffer(int aWidth, float anAspectRatio)
+	{
+		delete SFML_Renderer::ourOffscreenBuffer;
+		SFML_Renderer::ourOffscreenBuffer = new sf::RenderTexture();
+		SFML_Renderer::ourOffscreenBuffer->create(aWidth, static_cast<int>(aWidth / anAspectRatio));
+	}
+
 	void Present()
 	{
 		SFML_Renderer::ourRenderWindow->display();
@@ -144,7 +146,7 @@ namespace FW_Renderer
 
 		line[1].position = { float(aEnd.x), float(aEnd.y) };
 		line[1].color = SFML_Renderer::GetSFMLColor(aColor);
-;
+
 		SFML_Renderer::ourOffscreenBuffer->draw(line);
 	}
 
@@ -163,6 +165,18 @@ namespace FW_Renderer
 		rect.setTexture(nullptr);
 
 		SFML_Renderer::ourOffscreenBuffer->draw(rect);
+	}
+
+	void RenderCircle(const Vector2f& aCenter, float aRadius, int aColor)
+	{
+		sf::CircleShape& circle = SFML_Renderer::ourCircleShape;
+		circle.setPosition({ aCenter.x - aRadius, aCenter.y - aRadius });
+
+		if (aRadius != SFML_Renderer::ourCurrentCircleRadius)
+			circle.setRadius(aRadius);
+
+		circle.setFillColor(SFML_Renderer::GetSFMLColor(aColor));
+		SFML_Renderer::ourOffscreenBuffer->draw(circle);
 	}
 
 	void RenderTexture(const Texture& aTexture, const Vector2i& aPos)
@@ -194,11 +208,13 @@ namespace FW_Renderer
 			SFML_Renderer::ourOffscreenBuffer->draw(sprite);
 		}
 	}
+
 	void RenderTexture(int aTextureID, const Vector2i& aPos, const Vector2i& aSize, const Recti& aTextureRect)
 	{
 		Recti spriteRect = MakeRect(aPos, aSize);
 		RenderTexture(aTextureID, spriteRect, aTextureRect);
 	}
+
 	void RenderTexture(int aTextureID, const Recti& aSpriteRect, const Recti& aTextureRect)
 	{
 		if (const sf::Texture* texture = SFML_Renderer::GetSFMLTexture(aTextureID))
@@ -298,9 +314,21 @@ namespace FW_Renderer
 		sf::Vector2u size = SFML_Renderer::ourRenderWindow->getSize();
 		return size.x;
 	}
+
 	int GetScreenHeight()
 	{
 		sf::Vector2u size = SFML_Renderer::ourRenderWindow->getSize();
+		return size.y;
+	}
+
+	int GetOffscreenBufferWidth()
+	{
+		sf::Vector2u size = SFML_Renderer::ourOffscreenBuffer->getSize();
+		return size.x;
+	}
+	int GetOffscreenBufferHeight()
+	{
+		sf::Vector2u size = SFML_Renderer::ourOffscreenBuffer->getSize();
 		return size.y;
 	}
 

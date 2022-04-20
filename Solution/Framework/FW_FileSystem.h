@@ -21,7 +21,7 @@ namespace FW_FileSystem
 	{
 		FileContent(bool aAutoFreeContents = true) : myContents(nullptr), myAutoFreeContents(aAutoFreeContents) {}
 		~FileContent() { if (myAutoFreeContents) delete myContents; }
-		const unsigned char* myContents;
+		unsigned char* myContents;
 		long myFileSize;
 		bool myAutoFreeContents;
 	};

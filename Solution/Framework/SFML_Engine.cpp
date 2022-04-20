@@ -24,6 +24,8 @@ SFML_Engine::SFML_Engine(int aWidth, int aHeight, const char* aWindowTitle)
 	ImGui::SFML::Init(*myRenderWindow);
 	FW_Time::Init();
 	SFML_AudioSystem::Init();
+	
+	ImGui::GetIO().ConfigWindowsMoveFromTitleBarOnly = true;
 }
 
 void SFML_Engine::Run(FW_IGame& aGame)
@@ -97,8 +99,8 @@ void SFML_Engine::BuildImGUIStuff(FW_IGame& aGame)
 	consoleTitle += " fps)###DummyID";
 
 	ImVec2 imguiSize = myRenderWindow->getSize();
-	imguiSize.x -= 20;
-	imguiSize.y -= 20;
+	//imguiSize.x -= 20;
+	//imguiSize.y -= 20;
 	ImGui::SetNextWindowSize(imguiSize);
 	ImGui::Begin(consoleTitle.GetBuffer());
 

@@ -141,7 +141,6 @@ inline void FW_GrowingArray<ObjectType>::Respace(int aNewSize)
 #ifdef CE_ARRAY_BOUNDS_CHECK
 	CE_ASSERT(aNewSize > 0, locGrowingArray_ErrorStrings[INVALID_SIZE]);
 #endif
-
 	myMaxSize += aNewSize;
 	ObjectType* newData = new ObjectType[myMaxSize];
 	if (myUseSafeModeFlag == true)
@@ -162,8 +161,10 @@ inline void FW_GrowingArray<ObjectType>::Respace(int aNewSize)
 template<typename ObjectType>
 inline void FW_GrowingArray<ObjectType>::Reserve(int aNrOfItems)
 {
-	Respace(aNrOfItems);
-	myCurrentSize = myMaxSize;
+	if(myMaxSize < aNrOfItems)
+		Respace(aNrOfItems);
+
+	myCurrentSize = aNrOfItems;
 }
 
 template<typename ObjectType>

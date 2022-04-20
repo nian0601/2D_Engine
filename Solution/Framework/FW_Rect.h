@@ -1,4 +1,5 @@
 #pragma once
+#include "FW_Vector2.h"
 
 template <typename T>
 struct FW_Rect

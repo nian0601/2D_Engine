@@ -14,10 +14,12 @@ namespace FW_Renderer
 
 	void Clear();
 	void FinishOffscreenBuffer();
+	void ResizeOffscreenBuffer(int aWidth, float anAspectRatio);
 	void Present();
 
 	void RenderLine(const Vector2i& aStart, const Vector2i& aEnd, int aColor = 0xFFFFFFFF);
 	void RenderRect(const Rectf& aRect, int aColor = 0xFFFFFFFF);
+	void RenderCircle(const Vector2f& aCenter, float aRadius, int aColor = 0xFFFFFFFF);
 	void RenderTexture(const Texture& aTexture, const Vector2i& aPos);
 	void RenderTexture(const Texture& aTexture, const Vector2i& aPos, const Recti& aTextureRect);
 	void RenderTexture(int aTextureID, const Vector2i& aPos, const Vector2i& aSize, const Recti& aTextureRect);
@@ -35,6 +37,8 @@ namespace FW_Renderer
 	Texture GetTexture(const char* aFilePath);
 	int GetScreenWidth();
 	int GetScreenHeight();
+	int GetOffscreenBufferWidth();
+	int GetOffscreenBufferHeight();
 	Texture CreateTexture(const Vector2i& aSize);
 	void DeleteTexture(const Texture& aTexture);
 	void UpdatePixelsInTexture(const Texture& aTexture, void* somePixels);

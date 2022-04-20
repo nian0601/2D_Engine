@@ -1,6 +1,8 @@
 #pragma once
 #include <mbstring.h>
 
+#define USING_RAM_STORAGE 0
+
 class FW_String;
 class FW_FileProcessor
 {
@@ -32,6 +34,10 @@ private:
 	int myFlags;
 	int myStatus;
 	const char* myFilePath; // Just for debugging
+
+	unsigned char* myData;
+	int myDataSize;
+	int myCursorPosition;
 };
 
 template <typename T>
@@ -40,7 +46,31 @@ void FW_FileProcessor::Process(T& someData)
 	assert(IsOpen() == true && "Tried to process an unopened file");
 	
 	if (IsWriting())
+	{
+#if USING_RAM_STORAGE
+		memcpy(&myData[myCursorPosition], &someData, sizeof(someData));
+		myCursorPosition += sizeof(someData);
+#else
 		fwrite(&someData, sizeof(someData), 1, myFile);
+		if (ferror(myFile))
+		{
+			perror("Error writing generic data");
+			FW_ASSERT_ALWAYS("Something went wrong");
+		}
+#endif
+	}
 	else if (IsReading())
+	{
+#if USING_RAM_STORAGE
+		memcpy(&someData, &myData[myCursorPosition], sizeof(someData));
+		myCursorPosition += sizeof(someData);
+#else
 		fread(&someData, sizeof(someData), 1, myFile);
+		if (ferror(myFile))
+		{
+			perror("Error reading generic data");
+			FW_ASSERT_ALWAYS("Something went wrong");
+		}
+#endif
+	}
 }

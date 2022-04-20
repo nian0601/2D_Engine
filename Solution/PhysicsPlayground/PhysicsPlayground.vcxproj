@@ -20,19 +20,19 @@
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>15.0</VCProjectVersion>
-    <ProjectGuid>{BE5A01E5-F845-4A67-8EFD-BECC05D46594}</ProjectGuid>
-    <RootNamespace>Application</RootNamespace>
+    <ProjectGuid>{4258DEC6-7AB0-4CF0-914B-808DF8AC23BC}</ProjectGuid>
+    <RootNamespace>PhysicsPlayground</RootNamespace>
     <WindowsTargetPlatformVersion>10.0.17763.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
-    <ConfigurationType>Application</ConfigurationType>
+    <ConfigurationType>StaticLibrary</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
     <PlatformToolset>v141</PlatformToolset>
     <CharacterSet>MultiByte</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
-    <ConfigurationType>Application</ConfigurationType>
+    <ConfigurationType>StaticLibrary</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
     <PlatformToolset>v141</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
@@ -85,7 +85,6 @@
       <Optimization>Disabled</Optimization>
       <SDLCheck>true</SDLCheck>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(SolutionDir)..\SFML\include;$(SolutionDir)Framework;$(SolutionDir)Pong;$(SolutionDir)Raytracer;$(SolutionDir)PhysicsPlayground;$(SolutionDir)Breakout;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -104,7 +103,6 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(SolutionDir)..\SFML\include;$(SolutionDir)Framework;$(SolutionDir)Pong;$(SolutionDir)Raytracer;$(SolutionDir)PhysicsPlayground;$(SolutionDir)Breakout;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
@@ -126,24 +124,14 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ProjectReference Include="..\Breakout\Breakout.vcxproj">
-      <Project>{5eac4110-0f17-4dc8-8896-9f4584cf76c7}</Project>
-    </ProjectReference>
-    <ProjectReference Include="..\Framework\Framework.vcxproj">
-      <Project>{40d2e4c9-526d-4257-b8e2-994d24d7bb48}</Project>
-    </ProjectReference>
-    <ProjectReference Include="..\PhysicsPlayground\PhysicsPlayground.vcxproj">
-      <Project>{4258dec6-7ab0-4cf0-914b-808df8ac23bc}</Project>
-    </ProjectReference>
-    <ProjectReference Include="..\Pong\Pong.vcxproj">
-      <Project>{7f34a943-49e5-45c5-b2ba-38c05b790aa9}</Project>
-    </ProjectReference>
-    <ProjectReference Include="..\Raytracer\Raytracer.vcxproj">
-      <Project>{662b9c26-5879-4354-9c71-67d7d0998954}</Project>
-    </ProjectReference>
+    <ClInclude Include="ChainBuilder.h" />
+    <ClInclude Include="PhysicsPlayground.h" />
+    <ClInclude Include="PhysicsWorld.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="main.cpp" />
+    <ClCompile Include="ChainBuilder.cpp" />
+    <ClCompile Include="PhysicsPlayground.cpp" />
+    <ClCompile Include="PhysicsWorld.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
