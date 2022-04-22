@@ -3,6 +3,7 @@
 #include "FW_Vector2.h"
 #include "FW_Vector3.h"
 #define FW_PI 3.14159265358979323846f
+#define FW_EPSILON 0.0001f
 
 inline float FW_DegreesToRadians(float anAngle)
 {
@@ -121,4 +122,15 @@ inline T FW_Clamp(const T& aValue, const T& aMin, const T& aMax)
 	if (aValue < aMin) return aMin;
 	if (aValue > aMax) return aMax;
 	return aValue;
+}
+
+template <typename T>
+inline T FW_Square(const T& aValue)
+{
+	return aValue * aValue;
+}
+
+inline float FW_Equal(float A, float B)
+{
+	return abs(A - B) <= FW_EPSILON;
 }

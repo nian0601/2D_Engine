@@ -83,6 +83,7 @@
     <ClInclude Include="FW_Logger.h" />
     <ClInclude Include="FW_Renderer.h" />
     <ClInclude Include="FW_Threading.h" />
+    <ClInclude Include="FW_Matrix22.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="SFML_Input.cpp">

@@ -37,9 +37,10 @@ void PhysicsPlayground::OnStartup()
 	myMinMaxRestitution.x = 0.6f;
 	myMinMaxRestitution.y = 0.9f;
 
-	GenerateNewScene();
+	mySelectedSceneType = SceneType::Polygon;
+	GenerateScene(static_cast<SceneType>(mySelectedSceneType));
 
-	
+	myRenderContacts = false;
 }
 
 void PhysicsPlayground::OnShutdown()
@@ -54,7 +55,7 @@ bool PhysicsPlayground::Run()
 	mousePos.x -= 366.f;
 	mousePos.y -= 27.f;
 
-	if (FW_Input::WasMouseReleased(FW_Input::LEFTMB))
+	if (FW_Input::WasMouseReleased(FW_Input::RIGHTMB))
 		myPhysicsWorld.ApplyForceInRadius(mousePos, 200.f, 0.f, 500000.f);
 
 	if (myChainBuilder)
@@ -74,7 +75,8 @@ bool PhysicsPlayground::Run()
 	if (FW_Input::WasKeyReleased(FW_Input::SPACE))
 		playerForce.y -= 100000.f;
 
-	myPlayerObject->myForces += playerForce;
+	if (myPlayerObject)
+		myPlayerObject->myForces += playerForce;
 
 	static float accumulator = 0.f;
 
@@ -101,16 +103,28 @@ bool PhysicsPlayground::Run()
 		accumulator -= myPhysicsWorld.GetFixedDeltaTime();
 	}
 
-	
-
 	for (const Object* object : myPhysicsWorld.GetObjects())
 		object->myShape->Render();
+
+	if (myRenderContacts)
+	{
+		for (const Manifold& contact : myPhysicsWorld.GetContacts())
+		{
+			for (int i = 0; i < contact.myContactCount; ++i)
+			{
+				FW_Renderer::RenderLine(contact.myContacts[i], contact.myContacts[i] + contact.myHitNormal * contact.myPenetrationDepth, 0xFFFF0000);
+				FW_Renderer::RenderCircle(contact.myContacts[i], 3.f);
+			}
+		}
+	}
 
 	return true;
 }
 
 void PhysicsPlayground::BuildGameImguiEditor(unsigned int aGameOffscreenBufferTextureID)
 {
+	ImGui::ShowDemoWindow();
+
 	ImGui::BeginChild(ImGui::GetID((void*)(intptr_t)55), ImVec2(350, 500), false);
 
 	ImGui::Checkbox("Single Frame Mode", &myIsInSingleFrameMode);
@@ -118,21 +132,25 @@ void PhysicsPlayground::BuildGameImguiEditor(unsigned int aGameOffscreenBufferTe
 	if (ImGui::Button("Step Single Frame"))
 		myShouldStepSingleFrame = true;
 
-	ImGui::DragFloat("Gravity Scale", &myPhysicsWorld.myGravityScale, 0.1f, -20.f, 20.f);
-
+	ImGui::DragFloat("Gravity Scale", &PhysicsWorld::ourGravityScale, 0.1f, -20.f, 20.f);
+	ImGui::Checkbox("Render Contacts", &myRenderContacts);
 	
 
 	ImGui::Separator();
 
 	ImGui::DragInt("Number of Circles", &myNumberOfCircles, 1, 100);
-	ImGui::DragInt2("Min/Max Radius", &myMinMaxRadius.x, 1, 1, 100);
-	ImGui::DragFloat2("Min/Max Restitution", &myMinMaxRestitution.x, 0.01f, 0.f, 1.f);
+	ImGui::DragInt2("Radius", &myMinMaxRadius.x, 1, 1, 100);
+	ImGui::DragFloat2("Restitution", &myMinMaxRestitution.x, 0.01f, 0.f, 1.f);
 
-	if (ImGui::Button("Generate New Scene"))
+	if (ImGui::Button("Generate"))
 	{
 		myIsInSingleFrameMode = true;
-		GenerateNewScene();
+		GenerateScene(static_cast<SceneType>(mySelectedSceneType));
 	}
+
+	ImGui::SameLine();
+	const char* items[] = { "RandomCircles", "ChainTest", "BoxesAndCircles" };
+	ImGui::Combo("Scene", &mySelectedSceneType, items, IM_ARRAYSIZE(items));
 
 	if (!myChainBuilder)
 	{
@@ -162,11 +180,77 @@ void PhysicsPlayground::BuildGameImguiEditor(unsigned int aGameOffscreenBufferTe
 	ImGui::EndChild();
 }
 
-void PhysicsPlayground::GenerateNewScene()
+void PhysicsPlayground::GenerateScene(SceneType aSceneType)
 {
 	myPhysicsWorld.DeleteAllObjects();
 
-#if 0
+	switch (aSceneType)
+	{
+	case PhysicsPlayground::RandomCircles:
+		GenerateRandomCirclesScene();
+		break;
+	case PhysicsPlayground::ChainTest:
+		GenerateChainTestScene();
+		break;
+	case PhysicsPlayground::BoxesAndCircles:
+		GenerateBoxesAndCirclesScene();
+		break;
+	case PhysicsPlayground::Polygon:
+		GeneratePolygonScene();
+		break;
+	default:
+		break;
+	}
+
+#if 1
+	const int width = FW_Renderer::GetOffscreenBufferWidth();
+	const int height = FW_Renderer::GetOffscreenBufferHeight();
+
+	const float x1 = 0.f;
+	const float x2 = static_cast<float>(width);
+	const float y1 = 0.f;
+	const float y2 = static_cast<float>(height);
+
+	const float thickness = 30.f;
+
+	Rectf rect = MakeRect(x1, y1, x2, y1 + thickness);
+	Object* topEdge = new Object(new PolygonShape(rect.myExtents));
+	topEdge->myPosition = rect.myCenterPos;
+	topEdge->SetStatic();
+	topEdge->myColor = 0xFF444444;
+	myPhysicsWorld.AddObject(topEdge);
+
+	rect = MakeRect(x1, y2 - thickness*2, x2, y2-thickness);
+	Object* bottomEdge = new Object(new PolygonShape(rect.myExtents));
+	bottomEdge->myPosition = rect.myCenterPos;
+	bottomEdge->SetStatic();
+	bottomEdge->myColor = 0xFF444444;
+	bottomEdge->myRestitution = 0.1f;
+	myPhysicsWorld.AddObject(bottomEdge);
+
+	rect = MakeRect(x1, y1, x1 + thickness, y2);
+	Object* leftEdge = new Object(new PolygonShape(rect.myExtents));
+	leftEdge->myPosition = rect.myCenterPos;
+	leftEdge->SetStatic();
+	leftEdge->myColor = 0xFF444444;
+	myPhysicsWorld.AddObject(leftEdge);
+
+	rect = MakeRect(x2 - thickness, y1, x2, y2);
+	Object* rightEdge = new Object(new PolygonShape(rect.myExtents));
+	rightEdge->myPosition = rect.myCenterPos;
+	rightEdge->SetStatic();
+	rightEdge->myColor = 0xFF444444;
+	myPhysicsWorld.AddObject(rightEdge);
+
+	myPlayerObject = new Object(new CircleShape(10.f));
+	myPlayerObject->myPosition = { 500.f, 300.f };
+	myPlayerObject->myRestitution = 0.2f;
+	myPhysicsWorld.AddObject(myPlayerObject);
+#endif
+}
+
+void PhysicsPlayground::GenerateRandomCirclesScene()
+{
 	for (int i = 0; i < myNumberOfCircles; ++i)
 	{
 		float radius = static_cast<float>(FW_RandInt(myMinMaxRadius.x, myMinMaxRadius.y));
@@ -181,7 +265,10 @@ void PhysicsPlayground::GenerateNewScene()
 
 		myPhysicsWorld.AddObject(circle);
 	}
-#else
+}
+
+void PhysicsPlayground::GenerateChainTestScene()
+{
 	float radius = 10.f;
 	Object* anchor = new Object(new CircleShape(radius));
 	anchor->SetMass(0);
@@ -222,56 +309,72 @@ void PhysicsPlayground::GenerateNewScene()
 	constraint->myObjectB = endAnchor;
 	constraint->myMaxDistance = 20.f;
 	myPhysicsWorld.AddConstraint(constraint);
-#endif
+}
 
+void PhysicsPlayground::GenerateBoxesAndCirclesScene()
+{
 	const int width = FW_Renderer::GetOffscreenBufferWidth();
 	const int height = FW_Renderer::GetOffscreenBufferHeight();
 
-	const float x1 = 0.f;
-	const float x2 = static_cast<float>(width);
-	const float y1 = 0.f;
-	const float y2 = static_cast<float>(height);
+	const Vector2i widthSpan = { 50, 80 };
+	const Vector2i heightSpan = { 50, 80 };
 
-	const float thickness = 10.f;
+	Vector2f position = { 300.f, height - 30.f };
 
-	Rectf rect = MakeRect(x1, y1, x2, y1 + thickness);
-	Object* topEdge = new Object(new AABBShape(rect));
-	topEdge->myPosition = rect.myCenterPos;
-	topEdge->SetMass(0);
-	topEdge->myColor = 0xFF444444;
-	myPhysicsWorld.AddObject(topEdge);
+	for (int i = 0; i < 5; ++i)
+	{
+		Vector2f extents;
+		extents.x = static_cast<float>(FW_RandInt(widthSpan.x, widthSpan.y));
+		extents.y = static_cast<float>(FW_RandInt(heightSpan.x, heightSpan.y));
+		position.y -= 10.f;
+		position.y -= extents.y * 0.5f;
 
-	rect = MakeRect(x1, y2 - thickness, x2, y2);
-	Object* bottomEdge = new Object(new AABBShape(rect));
-	bottomEdge->myPosition = rect.myCenterPos;
-	bottomEdge->SetMass(0);
-	bottomEdge->myColor = 0xFF444444;
-	myPhysicsWorld.AddObject(bottomEdge);
+		Rectf rect = MakeRect(position, extents);
+		Object* box = new Object(new AABBShape(rect));
+		box->myPosition = rect.myCenterPos;
+		box->myColor = RandomColor();
+		box->SetMass(1.f);
+		box->myRestitution = 0.7f;
+		myPhysicsWorld.AddObject(box);
 
-	rect = MakeRect(x1, y1, x1 + thickness, y2);
-	Object* leftEdge = new Object(new AABBShape(rect));
-	leftEdge->myPosition = rect.myCenterPos;
-	leftEdge->SetMass(0);
-	leftEdge->myColor = 0xFF444444;
-	myPhysicsWorld.AddObject(leftEdge);
+		
+		position.y -= extents.y * 0.5f;
+	}
+}
 
-	rect = MakeRect(x2 - thickness, y1, x2, y2);
-	Object* rightEdge = new Object(new AABBShape(rect));
-	rightEdge->myPosition = rect.myCenterPos;
-	rightEdge->SetMass(0);
-	rightEdge->myColor = 0xFF444444;
-	myPhysicsWorld.AddObject(rightEdge);
+void PhysicsPlayground::GeneratePolygonScene()
+{
+	Vector2f extents;
+	extents.x = 40.f;
+	extents.y = 60.f;
 
-	rect = MakeRect(x1 + 300, y1 + 200, x1 + 500, y1 + 220);
-	Object* center = new Object(new AABBShape(rect));
-	center->myPosition = rect.myCenterPos;
-	center->SetMass(0);
-	center->myColor = 0xFF444444;
-	myPhysicsWorld.AddObject(center);
+	Vector2f position;
+	position.x = 200.f;
+	position.y = 200.f;
 
-	myPlayerObject = new Object(new CircleShape(10.f));
-	myPlayerObject->myPosition = { 500.f, 300.f };
-	myPlayerObject->SetMass(25.f);
-	myPlayerObject->myRestitution = 0.2f;
-	myPhysicsWorld.AddObject(myPlayerObject);
+	Object* polygon = new Object(new PolygonShape(extents));
+	polygon->myPosition = position;
+	polygon->myColor = RandomColor();
+	polygon->SetOrientation(FW_DegreesToRadians(-40.f));
+	polygon->myRestitution = 0.2f;
+	polygon->myDynamicFriction = 0.2f;
+	polygon->myStaticFriction = 0.4f;
+
+	myPhysicsWorld.AddObject(polygon);
+
+	extents.x = 60.f;
+	extents.y = 40.f;
+
+	position.x = 200.f;
+	position.y = 50.f;
+
+	polygon = new Object(new PolygonShape(extents));
+	polygon->myPosition = position;
+	polygon->myColor = RandomColor();
+	polygon->SetOrientation(FW_DegreesToRadians(-40.f));
+	polygon->myRestitution = 0.2f;
+	polygon->myDynamicFriction = 0.2f;
+	polygon->myStaticFriction = 0.4f;
+
+	myPhysicsWorld.AddObject(polygon);
 }

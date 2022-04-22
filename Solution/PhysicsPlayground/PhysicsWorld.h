@@ -2,7 +2,9 @@
 #include <FW_Rect.h>
 #include <FW_GrowingArray.h>
 #include <FW_Vector2.h>
+#include <FW_Matrix22.h>
 
+#include "PhysicsShapes.h"
 
 // https://gamedevelopment.tutsplus.com/tutorials/how-to-create-a-custom-2d-physics-engine-the-basics-and-impulse-resolution--gamedev-6331
 // https://gamedevelopment.tutsplus.com/tutorials/how-to-create-a-custom-2d-physics-engine-the-core-engine--gamedev-7493
@@ -12,11 +14,9 @@
 // Goes over constraints in p3
 // https://www.toptal.com/game/video-game-physics-part-i-an-introduction-to-rigid-body-dynamics
 
-struct Shape;
 struct Object
 {
 	Object(Shape* aShape);
-
 	~Object();
 
 	Vector2f myPosition; // += myVelocity * deltaTime
@@ -24,9 +24,18 @@ struct Object
 	Vector2f myAcceleration; // myForces / myMass
 	Vector2f myForces; // Cleared every frame
 
-	float myRestitution = 1.0f; //Bouncyness, 0 == BeanBag, 1 == SuperBall
+	float myOrientation = 0.f;
+	float myAngularVelocity = 0.f;
+	float myTorque = 0.f;
+	
+	float myRestitution = 0.7f; //Bouncyness, 0 == BeanBag, 1 == SuperBall
+
 	float myMass = 1.f;
 	float myInvMass = 1.f;
+
+	float myInertia = 1.f;
+	float myInvInertia = 1.f;
+
 	float myStaticFriction = 0.5f;
 	float myDynamicFriction = 0.25f;
 
@@ -34,75 +43,32 @@ struct Object
 
 	Shape* myShape = nullptr;
 
-	void SetMass(float aMass)
-	{
-		myMass = aMass;
+	void IntegrateForces(float aDelta);
+	void IntegrateVelocity(float aDelta);
 
-		if (myMass > 0.f)
-			myInvMass = 1.f / aMass;
-		else
-			myInvMass = 0.f;
-	}
+	void ApplyImpulse(const Vector2f& aImpulse, const Vector2f& aContactVector);
+
+	void SetMass(float aMass);
+	void SetInertia(float aIntertia);
+	void SetStatic();
+	void SetOrientation(float aRadians);
 };
 
 struct Manifold
 {
-	Object* myObjectA;
-	Object* myObjectB;
+	Object* myObjectA = nullptr;
+	Object* myObjectB = nullptr;
 	Vector2f myHitNormal;
-	float myPenetrationDepth;
-};
-
-struct CircleShape;
-struct AABBShape;
-struct Shape
-{
-	virtual ~Shape() {}
-	virtual bool RunCollision(const Shape& aShape, Manifold& aManifold) const = 0;
-
-	virtual bool TestCollision(const CircleShape& aCircleShape, Manifold& aManifold) const = 0;
-	virtual bool TestCollision(const AABBShape& aAABBShape, Manifold& aManifold) const = 0;
-
-	virtual void Render() const = 0;
-
-	Object* myObject = nullptr;
-};
-
-struct CircleShape : public Shape
-{
-	CircleShape(float aRadius)
-		: myRadius(aRadius)
-	{}
-
-	float myRadius;
-
-	bool RunCollision(const Shape& aShape, Manifold& aManifold) const;
-	bool TestCollision(const CircleShape& aCircleShape, Manifold& aManifold) const override;
-	bool TestCollision(const AABBShape& aAABBShape, Manifold& aManifold) const override;
-
-	void Render() const override;
-};
-
-struct AABBShape : public Shape
-{
-	AABBShape(const Rectf& aRect)
-		: myRect(aRect)
-	{}
-
-	Rectf myRect;
-
-	bool RunCollision(const Shape& aShape, Manifold& aManifold) const;
-	bool TestCollision(const CircleShape& aCircleShape, Manifold& aManifold) const override;
-	bool TestCollision(const AABBShape& aAABBShape, Manifold& aManifold) const override;
-
-	void Render() const override;
+	Vector2f myContacts[2];
+	int myContactCount = 0;
+	float myPenetrationDepth = 0.f;
 };
 
 struct MaxDistanceConstraint
 {
-	Object* myObjectA;
-	Object* myObjectB;
-	float myMaxDistance;
+	Object* myObjectA = nullptr;
+	Object* myObjectB = nullptr;
+	float myMaxDistance = 0.f;
 
 	void ResolveConstraint();
 };
@@ -123,15 +89,18 @@ public:
 	void AddConstraint(MaxDistanceConstraint* aConstraint);
 
 	const FW_GrowingArray<Object*>& GetObjects() const { return myObjects; }
-
+	const FW_GrowingArray<Manifold>& GetContacts() const { return myContacts; }
 	float GetFixedDeltaTime() const { return myFixedDeltaTime; }
-	float myGravityScale;
+
+	static float ourGravityScale;
+	static const Vector2f ourGravity;
 
 private:
 	void ResolveCollision(const Manifold& aManifold);
 	void PositionalCorrection(const Manifold& aManifold);
 
 	float myFixedDeltaTime;
+	FW_GrowingArray<Manifold> myContacts;
 	FW_GrowingArray<Object*> myObjects;
 	FW_GrowingArray<MaxDistanceConstraint*> myMaxDistanceConstraints;
 

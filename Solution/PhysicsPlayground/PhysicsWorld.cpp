@@ -10,6 +10,8 @@ Object::Object(Shape* aShape)
 {
 	myShape = aShape;
 	myShape->myObject = this;
+	aShape->SetOrientation(myOrientation);
+	aShape->ComputeMass(1.f);
 }
 
 Object::~Object()
@@ -17,215 +19,70 @@ Object::~Object()
 	delete myShape;
 }
 
-bool CircleShape::RunCollision(const Shape& aShape, Manifold& aManifold) const
+void Object::IntegrateForces(float aDelta)
 {
-	return aShape.TestCollision(*this, aManifold);
+	if (myInvMass == 0.f)
+		return;
+
+	const Vector2f gravity = PhysicsWorld::ourGravity * PhysicsWorld::ourGravityScale;
+	myVelocity += (myForces * myInvMass + gravity) * aDelta;
+	myAngularVelocity += myTorque * myInvInertia * aDelta;
 }
 
-bool CircleShape::TestCollision(const CircleShape& aCircleShape, Manifold& aManifold) const
+void Object::IntegrateVelocity(float aDelta)
 {
-	Vector2f collisionVector = aCircleShape.myObject->myPosition - myObject->myPosition;
-
-	const float distance = Length(collisionVector);
-	if (distance < myRadius + aCircleShape.myRadius)
-	{
-		aManifold.myObjectA = myObject;
-		aManifold.myObjectB = aCircleShape.myObject;
-		aManifold.myHitNormal = GetNormalized(collisionVector);
-		aManifold.myPenetrationDepth = distance - (myRadius + aCircleShape.myRadius);
-		return true;
-	}
-
-	return false;
+	myPosition += myVelocity * aDelta;
+	myOrientation += myAngularVelocity * aDelta;
+	SetOrientation(myOrientation);
+	IntegrateForces(aDelta);
 }
 
-bool CircleShape::TestCollision(const AABBShape& aAABBShape, Manifold& aManifold) const
+void Object::ApplyImpulse(const Vector2f& aImpulse, const Vector2f& aContactVector)
 {
-	Vector2f n = aAABBShape.myObject->myPosition - myObject->myPosition;
-	Vector2f closest = n;
+	myVelocity += myInvMass * aImpulse;
+	myAngularVelocity += myInvInertia * Cross(aContactVector, aImpulse);
+}
 
-	float halfXExtent = aAABBShape.myRect.myExtents.x * 0.5f;
-	float halfYExtent = aAABBShape.myRect.myExtents.y * 0.5f;
+void Object::SetMass(float aMass)
+{
+	myMass = aMass;
 
-	closest.x = FW_Clamp(closest.x, -halfXExtent, halfXExtent);
-	closest.y = FW_Clamp(closest.y, -halfYExtent, halfYExtent);
-
-	bool inside = false;
-	if (n == closest)
-	{
-		inside = true;
-
-		if (abs(n.x) > abs(n.y))
-		{
-			if (closest.x > 0.f)
-				closest.x = halfXExtent;
-			else
-				closest.x = -halfXExtent;
-		}
-		else
-		{
-			if (closest.y > 0.f)
-				closest.y = halfYExtent;
-			else
-				closest.y = -halfYExtent;
-		}
-	}
-
-	Vector2f normal = n - closest;
-	float distance = Length2(normal);
-	float radius = myRadius;
-
-	if (distance > radius * radius && !inside)
-		return false;
-
-	distance = sqrt(distance);
-	Normalize(normal);
-
-	if (inside)
-	{
-		aManifold.myHitNormal = -normal;
-		aManifold.myPenetrationDepth = radius - distance;
-	}
+	if (myMass > 0.f)
+		myInvMass = 1.f / aMass;
 	else
-	{
-		aManifold.myHitNormal = normal;
-		aManifold.myPenetrationDepth = radius - distance;
-	}
-
-	aManifold.myObjectA = myObject;
-	aManifold.myObjectB = aAABBShape.myObject;
-	return true;
+		myInvMass = 0.f;
 }
 
-void CircleShape::Render() const
+void Object::SetInertia(float aIntertia)
 {
-	FW_Renderer::RenderCircle(myObject->myPosition, myRadius, myObject->myColor);
-}
-
-bool AABBShape::RunCollision(const Shape& aShape, Manifold& aManifold) const
-{
-	return aShape.TestCollision(*this, aManifold);
-}
-
-bool AABBShape::TestCollision(const CircleShape& aCircleShape, Manifold& aManifold) const
-{
-	Vector2f n = aCircleShape.myObject->myPosition - myObject->myPosition;
-	Vector2f closest = n;
-
-	float halfXExtent = myRect.myExtents.x * 0.5f;
-	float halfYExtent = myRect.myExtents.y * 0.5f;
-
-	closest.x = FW_Clamp(closest.x, -halfXExtent, halfXExtent);
-	closest.y = FW_Clamp(closest.y, -halfYExtent, halfYExtent);
-
-	bool inside = false;
-	if (n == closest)
-	{
-		inside = true;
-
-		if (abs(n.x) > abs(n.y))
-		{
-			if (closest.x > 0.f)
-				closest.x = halfXExtent;
-			else
-				closest.x = -halfXExtent;
-		}
-		else
-		{
-			if (closest.y > 0.f)
-				closest.y = halfYExtent;
-			else
-				closest.y = -halfYExtent;
-		}
-	}
-
-	Vector2f normal = n - closest;
-	float distance = Length2(normal);
-	float radius = aCircleShape.myRadius;
-
-	if (distance > radius * radius && !inside)
-		return false;
-
-	distance = sqrt(distance);
-	Normalize(normal);
-
-	if (inside)
-	{
-		aManifold.myHitNormal = -normal;
-		aManifold.myPenetrationDepth = radius - distance;
-	}
+	myInertia = aIntertia;
+	if (myInertia > 0.f)
+		myInvInertia = 1.f / myInertia;
 	else
-	{
-		aManifold.myHitNormal = normal;
-		aManifold.myPenetrationDepth = radius - distance;
-	}
-
-	aManifold.myObjectA = myObject;
-	aManifold.myObjectB = aCircleShape.myObject;
-	return true;
+		myInvInertia = 0.f;
 }
 
-bool AABBShape::TestCollision(const AABBShape& aAABBShape, Manifold& aManifold) const
+void Object::SetStatic()
 {
-	Object* A = myObject;
-	Object* B = aAABBShape.myObject;
-
-	Vector2f n = B->myPosition - A->myPosition;
-
-	Rectf abox = myRect;
-	Rectf bbox = aAABBShape.myRect;
-
-	float a_extent_x = abox.myExtents.x * 0.5f;
-	float b_extent_x = bbox.myExtents.x * 0.5f;
-
-	float x_overlap = a_extent_x + b_extent_x - abs(n.x);
-
-	if (x_overlap > 0.f)
-	{
-		float a_extent_y = abox.myExtents.y * 0.5f;
-		float b_extent_y = bbox.myExtents.y * 0.5f;
-
-		float y_overlap = a_extent_y + b_extent_y - abs(n.y);
-
-		if (y_overlap > 0.f)
-		{
-			if (n.x < 0.f)
-				aManifold.myHitNormal = { -1.f, 0.f };
-			else
-				aManifold.myHitNormal = { 1.f, 0.f }; // Should this be {1.f, 0.f}?
-
-			aManifold.myObjectA = myObject;
-			aManifold.myObjectB = aAABBShape.myObject;
-			aManifold.myPenetrationDepth = x_overlap;
-			return true;
-		}
-		else
-		{
-			if (n.y < 0.f)
-				aManifold.myHitNormal = { 0.f, -1.f };
-			else
-				aManifold.myHitNormal = { 0.f, 1.f };
-
-			aManifold.myObjectA = myObject;
-			aManifold.myObjectB = aAABBShape.myObject;
-			aManifold.myPenetrationDepth = y_overlap;
-			return true;
-		}
-	}
-
-	return false;
+	myMass = 0.f;
+	myInvMass = 0.f;
+	myInertia = 0.f;
+	myInvInertia = 0.f;
 }
 
-void AABBShape::Render() const
+void Object::SetOrientation(float aRadians)
 {
-	FW_Renderer::RenderRect(myRect, myObject->myColor);
+	myOrientation = aRadians;
+	myShape->SetOrientation(aRadians);
 }
 
 //////////////////////////////////////////////////////////////////////////
 
+const Vector2f PhysicsWorld::ourGravity = Vector2f(0.f, 9.82f);
+float PhysicsWorld::ourGravityScale = 7.f;
+
 PhysicsWorld::PhysicsWorld()
-	: myGravityScale(7.f)
-	, myFixedDeltaTime(1.f / 60.f)
+	: myFixedDeltaTime(1.f / 60.f)
 {
 	myCircleShape = new CircleShape(5.f);
 	myCircleObject = new Object(myCircleShape);
@@ -240,32 +97,32 @@ PhysicsWorld::~PhysicsWorld()
 
 void PhysicsWorld::Tick()
 {
-	const Vector2f gravity = { 0.f, 9.82f * myGravityScale };
-
-	FW_GrowingArray<Manifold> manifolds;
 	Manifold manifold;
+	myContacts.RemoveAll();
 
 	for (int i = 0; i < myObjects.Count(); ++i)
 	{
+		const Object* A = myObjects[i];
+
 		for (int j = i + 1; j < myObjects.Count(); ++j)
 		{
+			const Object* B = myObjects[j];
+
+			if(A->myInvMass == 0.f && B->myInvMass == 0.f)
+				continue;
+
 			if (myObjects[i]->myShape->RunCollision(*myObjects[j]->myShape, manifold))
-				manifolds.Add(manifold);
+				myContacts.Add(manifold);
 		}
 	}
 
 	for (Object* object : myObjects)
-	{
-		if(object->myInvMass == 0.f)
-			continue;
-
-		object->myVelocity += (object->myForces * object->myInvMass + gravity) * myFixedDeltaTime;
-	}
+		object->IntegrateForces(myFixedDeltaTime);
 
 	const int maxNumIterations = 10;
 	for (int i = 0; i < maxNumIterations; ++i)
 	{
-		for (const Manifold& manifold : manifolds)
+		for (const Manifold& manifold : myContacts)
 			ResolveCollision(manifold);
 
 		for (MaxDistanceConstraint* constraint : myMaxDistanceConstraints)
@@ -273,13 +130,16 @@ void PhysicsWorld::Tick()
 	}
 
 	for (Object* object : myObjects)
-		object->myPosition += object->myVelocity * myFixedDeltaTime;
+		object->IntegrateVelocity(myFixedDeltaTime);
 
-	for (const Manifold& manifold : manifolds)
+	for (const Manifold& manifold : myContacts)
 		PositionalCorrection(manifold);
 
 	for (Object* object : myObjects)
+	{
 		object->myForces = { 0.f, 0.f };
+		object->myTorque = 0.f;
+	}
 }
 
 void PhysicsWorld::ApplyForceInRadius(const Vector2f& aCenter, float aRadius, float aMinForce, float aMaxForce)
@@ -330,46 +190,55 @@ void PhysicsWorld::ResolveCollision(const Manifold& aManifold)
 		return;
 	}
 
-	Vector2f rv = B.myVelocity - A.myVelocity;
-	float velAlongNormal = Dot(rv, aManifold.myHitNormal);
-
-	if (velAlongNormal > 0.f)
-		return;
-
 	float e = FW_Min(A.myRestitution, B.myRestitution);
+	float sf = A.myStaticFriction * A.myStaticFriction;
+	float df = A.myDynamicFriction * A.myDynamicFriction;
 
-	float j = -(1.f + e) * velAlongNormal;
-	j /= A.myInvMass + B.myInvMass;
+	for (int i = 0; i < aManifold.myContactCount; ++i)
+	{
+		Vector2f ra = aManifold.myContacts[i] - A.myPosition;
+		Vector2f rb = aManifold.myContacts[i] - B.myPosition;
 
-	Vector2f impulse = j * aManifold.myHitNormal;
-	A.myVelocity -= A.myInvMass * impulse;
-	B.myVelocity += B.myInvMass * impulse;
+		Vector2f rv = B.myVelocity + Cross(B.myAngularVelocity, rb) - A.myVelocity - Cross(A.myAngularVelocity, ra);
 
-	//
-	// Friction
-	//
+		float contactVelocity = Dot(rv, aManifold.myHitNormal);
+		if (contactVelocity > 0.f)
+			return;
 
-	rv = B.myVelocity - A.myVelocity;
-	Vector2f tangent = rv - Dot(rv, aManifold.myHitNormal) * aManifold.myHitNormal;
-	Normalize(tangent);
+		float raCrossN = Cross(ra, aManifold.myHitNormal);
+		float rbCrossN = Cross(rb, aManifold.myHitNormal);
+		float invMassSum = A.myInvMass + B.myInvMass + FW_Square(raCrossN) * A.myInvInertia + FW_Square(rbCrossN) * B.myInvInertia;
 
-	float jT = -Dot(rv, tangent);
-	jT = jT / (A.myInvMass + B.myInvMass);
+		// Impulse-scalar
+		float j = -(1.f + e) * contactVelocity;
+		j /= invMassSum;
+		j /= static_cast<float>(aManifold.myContactCount);
 
-	if (jT == 0.f)
-		return;
+		Vector2f impulse = aManifold.myHitNormal * j;
+		A.ApplyImpulse(-impulse, ra);
+		B.ApplyImpulse( impulse, rb);
 
-	float staticFriction = A.myStaticFriction * A.myStaticFriction;
-	float dynamicFriction = A.myDynamicFriction * A.myDynamicFriction;
-
-	Vector2f frictionImpulse;
-	if (abs(jT) < j * staticFriction)
-		frictionImpulse = jT * tangent;
-	else
-		frictionImpulse = -j * tangent * dynamicFriction;
-
-	A.myVelocity -= A.myInvMass * frictionImpulse;
-	B.myVelocity += B.myInvMass * frictionImpulse;
+		// Friction
+		rv = B.myVelocity + Cross(B.myAngularVelocity, rb) - A.myVelocity - Cross(A.myAngularVelocity, ra);
+		Vector2f t = rv - (aManifold.myHitNormal * Dot(rv, aManifold.myHitNormal));
+		Normalize(t);
+		
+		float jT = -Dot(rv, t);
+		jT /= invMassSum;
+		jT /= static_cast<float>(aManifold.myContactCount);
+		
+		if (FW_Equal(jT, 0.f))
+			return;
+		
+		Vector2f tangentImpulse;
+		if (abs(jT) < j * sf)
+			tangentImpulse = t * jT;
+		else
+			tangentImpulse = t * -j * df;
+		
+		A.ApplyImpulse(-tangentImpulse, ra);
+		B.ApplyImpulse( tangentImpulse, rb);
+	}
 }
 
 void PhysicsWorld::PositionalCorrection(const Manifold& aManifold)
@@ -377,11 +246,8 @@ void PhysicsWorld::PositionalCorrection(const Manifold& aManifold)
 	Object& A = *aManifold.myObjectA;
 	Object& B = *aManifold.myObjectB;
 
-	if (A.myInvMass + B.myInvMass == 0.f)
-		return;
-
-	const float percent = 0.5f;
-	const float slop = 0.1f;
+	const float percent = 0.4f;
+	const float slop = 0.05f;
 	Vector2f correction = (FW_Max(aManifold.myPenetrationDepth - slop, 0.f) / (A.myInvMass + B.myInvMass)) * percent * aManifold.myHitNormal;
 
 	A.myPosition -= A.myInvMass * correction;

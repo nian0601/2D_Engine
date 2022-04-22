@@ -4,10 +4,12 @@
     <ClInclude Include="PhysicsPlayground.h" />
     <ClInclude Include="PhysicsWorld.h" />
     <ClInclude Include="ChainBuilder.h" />
+    <ClInclude Include="PhysicsShapes.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="PhysicsPlayground.cpp" />
     <ClCompile Include="PhysicsWorld.cpp" />
     <ClCompile Include="ChainBuilder.cpp" />
+    <ClCompile Include="PhysicsShapes.cpp" />
   </ItemGroup>
 </Project>

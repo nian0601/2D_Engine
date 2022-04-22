@@ -18,6 +18,7 @@ namespace FW_Renderer
 	void Present();
 
 	void RenderLine(const Vector2i& aStart, const Vector2i& aEnd, int aColor = 0xFFFFFFFF);
+	void RenderLine(const Vector2f& aStart, const Vector2f& aEnd, int aColor = 0xFFFFFFFF);
 	void RenderRect(const Rectf& aRect, int aColor = 0xFFFFFFFF);
 	void RenderCircle(const Vector2f& aCenter, float aRadius, int aColor = 0xFFFFFFFF);
 	void RenderTexture(const Texture& aTexture, const Vector2i& aPos);

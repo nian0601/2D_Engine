@@ -150,6 +150,18 @@ namespace FW_Renderer
 		SFML_Renderer::ourOffscreenBuffer->draw(line);
 	}
 
+	void RenderLine(const Vector2f& aStart, const Vector2f& aEnd, int aColor)
+	{
+		sf::VertexArray line(sf::Lines, 2);
+		line[0].position = { aStart.x, aStart.y };
+		line[0].color = SFML_Renderer::GetSFMLColor(aColor);
+
+		line[1].position = { aEnd.x, aEnd.y };
+		line[1].color = SFML_Renderer::GetSFMLColor(aColor);
+
+		SFML_Renderer::ourOffscreenBuffer->draw(line);
+	}
+
 	void RenderRect(const Rectf& aRect, int aColor)
 	{
 		sf::RectangleShape& rect = SFML_Renderer::ourRectangleShape;
@@ -253,6 +265,7 @@ namespace FW_Renderer
 		text.setFont(*SFML_Renderer::ourFont);
 		text.setString(aString);
 		text.setFillColor(SFML_Renderer::GetSFMLColor(aColor));
+		text.setCharacterSize(15);
 
 		Vector2i pos = aPos;
 		if (aTextAlignment == TextAlignment::CENTER)

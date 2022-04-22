@@ -60,6 +60,24 @@ T Dot(const FW_Vector2<T>& aFirstVector, const FW_Vector2<T>& aSecondVector)
 }
 
 template <typename T>
+T Cross(const FW_Vector2<T>& aFirstVector, const FW_Vector2<T>& aSecondVector)
+{
+	return aFirstVector.x * aSecondVector.y - aFirstVector.y * aSecondVector.x;
+}
+
+template <typename T>
+FW_Vector2<T> Cross(const FW_Vector2<T>& aVector, T aScalar)
+{
+	return FW_Vector2<T>(aScalar * aVector.y, -aScalar * aVector.x);
+}
+
+template <typename T>
+FW_Vector2<T> Cross(T aScalar, const FW_Vector2<T>& aVector)
+{
+	return FW_Vector2<T>(-aScalar * aVector.y, aScalar * aVector.x);
+}
+
+template <typename T>
 FW_Vector2<T> ReflectAround(const FW_Vector2<T>& aVector, const FW_Vector2<T>& aReflectionVector)
 {
 	return aVector - static_cast<T>(2) * aReflectionVector * Dot(aReflectionVector, aVector);

@@ -151,6 +151,7 @@
     <ClInclude Include="FW_LevelLoader.h" />
     <ClInclude Include="FW_Logger.h" />
     <ClInclude Include="FW_Math.h" />
+    <ClInclude Include="FW_Matrix22.h" />
     <ClInclude Include="FW_MessageQueue.h" />
     <ClInclude Include="FW_Messages.h" />
     <ClInclude Include="FW_Murmur.h" />

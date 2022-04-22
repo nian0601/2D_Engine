@@ -22,7 +22,20 @@ public:
 	const char* GetDataFolderName() override { return "PhysicsPlayground"; }
 
 private:
-	void GenerateNewScene();
+	enum SceneType
+	{
+		RandomCircles,
+		ChainTest,
+		BoxesAndCircles,
+		Polygon,
+	};
+	int mySelectedSceneType;
+
+	void GenerateScene(SceneType aSceneType);
+	void GenerateRandomCirclesScene();
+	void GenerateChainTestScene();
+	void GenerateBoxesAndCirclesScene();
+	void GeneratePolygonScene();
 
 	PhysicsWorld myPhysicsWorld;
 	Object* myPlayerObject;
@@ -34,4 +47,6 @@ private:
 	int myNumberOfCircles;
 	Vector2i myMinMaxRadius;
 	Vector2f myMinMaxRestitution;
+
+	bool myRenderContacts;
 };
