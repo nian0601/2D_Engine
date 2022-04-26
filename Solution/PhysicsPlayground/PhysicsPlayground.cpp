@@ -49,14 +49,10 @@ void PhysicsPlayground::OnShutdown()
 
 bool PhysicsPlayground::Run()
 {
-	Vector2f mousePos = FW_Input::GetMousePositionf();
-	// Magic number-adjustments to move the MousePos to the topleft corner of the game-window
-	// Surely there is some better way of doing this using ImGui-stuff?
-	mousePos.x -= 366.f;
-	mousePos.y -= 27.f;
+	const Vector2f& mousePos = FW_Input::GetMousePositionf();
 
 	if (FW_Input::WasMouseReleased(FW_Input::RIGHTMB))
-		myPhysicsWorld.ApplyForceInRadius(mousePos, 200.f, 0.f, 500000.f);
+		myPhysicsWorld.ApplyForceInRadius(mousePos, 200.f, 0.f, 100000.f);
 
 	if (myChainBuilder)
 	{
@@ -69,14 +65,14 @@ bool PhysicsPlayground::Run()
 
 	Vector2f playerForce;
 	if (FW_Input::IsKeyDown(FW_Input::A))
-		playerForce.x -= 200.f;
+		playerForce.x -= 100.f;
 	if (FW_Input::IsKeyDown(FW_Input::D))
-		playerForce.x += 200.f;
+		playerForce.x += 100.f;
 	if (FW_Input::WasKeyReleased(FW_Input::SPACE))
-		playerForce.y -= 100000.f;
+		playerForce.y -= 50000.f;
 
 	if (myPlayerObject)
-		myPlayerObject->myForces += playerForce;
+		myPlayerObject->myVelocity += myPlayerObject->myInvMass * playerForce;
 
 	static float accumulator = 0.f;
 
@@ -201,14 +197,14 @@ void PhysicsPlayground::GenerateScene(SceneType aSceneType)
 
 	Rectf rect = MakeRect(x1, y1, x2, y1 + thickness);
 	Object* topEdge = new Object(new PolygonShape(rect.myExtents));
-	topEdge->myPosition = rect.myCenterPos;
+	topEdge->SetPosition(rect.myCenterPos);
 	topEdge->SetStatic();
 	topEdge->myColor = 0xFF444444;
 	myPhysicsWorld.AddObject(topEdge);
 
 	rect = MakeRect(x1, y2 - thickness*2, x2, y2-thickness);
 	Object* bottomEdge = new Object(new PolygonShape(rect.myExtents));
-	bottomEdge->myPosition = rect.myCenterPos;
+	bottomEdge->SetPosition(rect.myCenterPos);
 	bottomEdge->SetStatic();
 	bottomEdge->myColor = 0xFF444444;
 	bottomEdge->myRestitution = 0.1f;
@@ -216,20 +212,20 @@ void PhysicsPlayground::GenerateScene(SceneType aSceneType)
 
 	rect = MakeRect(x1, y1, x1 + thickness, y2);
 	Object* leftEdge = new Object(new PolygonShape(rect.myExtents));
-	leftEdge->myPosition = rect.myCenterPos;
+	leftEdge->SetPosition(rect.myCenterPos);
 	leftEdge->SetStatic();
 	leftEdge->myColor = 0xFF444444;
 	myPhysicsWorld.AddObject(leftEdge);
 
 	rect = MakeRect(x2 - thickness, y1, x2, y2);
 	Object* rightEdge = new Object(new PolygonShape(rect.myExtents));
-	rightEdge->myPosition = rect.myCenterPos;
+	rightEdge->SetPosition(rect.myCenterPos);
 	rightEdge->SetStatic();
 	rightEdge->myColor = 0xFF444444;
 	myPhysicsWorld.AddObject(rightEdge);
 
 	myPlayerObject = new Object(new CircleShape(10.f));
-	myPlayerObject->myPosition = { 500.f, 300.f };
+	myPlayerObject->SetPosition({ 500.f, 300.f });
 	myPlayerObject->myRestitution = 0.2f;
 	myPhysicsWorld.AddObject(myPlayerObject);
 #endif
@@ -241,11 +237,9 @@ void PhysicsPlayground::GenerateRandomCirclesScene()
 	{
 		float radius = static_cast<float>(FW_RandInt(myMinMaxRadius.x, myMinMaxRadius.y));
 		Object* circle = new Object(new CircleShape(radius));
-		circle->SetMass(radius);
 
 		circle->myRestitution = FW_RandFloat(myMinMaxRestitution.x, myMinMaxRestitution.y);
-		circle->myPosition.x = FW_RandFloat(50.f, 600.f);
-		circle->myPosition.y = FW_RandFloat(50.f, 300.f);
+		circle->SetPosition({ FW_RandFloat(50.f, 600.f) , FW_RandFloat(50.f, 300.f) });
 		circle->myVelocity = FW_RandomVector2f() * FW_RandFloat(50.f, 150.f);
 		circle->myColor = RandomColor();
 
@@ -258,7 +252,7 @@ void PhysicsPlayground::GenerateChainTestScene()
 	float radius = 10.f;
 	Object* anchor = new Object(new CircleShape(radius));
 	anchor->SetMass(0);
-	anchor->myPosition = { 200.f, 200.f };
+	anchor->SetPosition({ 200.f, 200.f });
 	anchor->myColor = 0xFF444444;
 	myPhysicsWorld.AddObject(anchor);
 
@@ -270,8 +264,7 @@ void PhysicsPlayground::GenerateChainTestScene()
 		newLink->SetMass(radius);
 		newLink->myRestitution = 0.7f;
 
-		newLink->myPosition = prevLink->myPosition;
-		newLink->myPosition.y += radius * 2;
+		newLink->SetPosition(prevLink->myPosition + radius * 2);
 		myPhysicsWorld.AddObject(newLink);
 
 		MaxDistanceConstraint* constraint = new MaxDistanceConstraint();
@@ -286,8 +279,7 @@ void PhysicsPlayground::GenerateChainTestScene()
 	Object* endAnchor = new Object(new CircleShape(radius));
 	endAnchor->SetMass(0);
 	endAnchor->myColor = 0xFF444444;
-	endAnchor->myPosition = prevLink->myPosition;
-	endAnchor->myPosition.y += radius * 2;
+	endAnchor->SetPosition(prevLink->myPosition + radius * 2);
 	myPhysicsWorld.AddObject(endAnchor);
 
 	MaxDistanceConstraint* constraint = new MaxDistanceConstraint();
@@ -339,9 +331,9 @@ void PhysicsPlayground::GeneratePolygonScene()
 	position.y = 200.f;
 
 	Object* polygon = new Object(new PolygonShape(extents));
-	polygon->myPosition = position;
-	polygon->myColor = RandomColor();
+	polygon->SetPosition(position);
 	polygon->SetOrientation(FW_DegreesToRadians(-40.f));
+	polygon->myColor = RandomColor();
 	polygon->myRestitution = 0.2f;
 	polygon->myDynamicFriction = 0.2f;
 	polygon->myStaticFriction = 0.4f;
@@ -357,9 +349,9 @@ void PhysicsPlayground::GeneratePolygonScene()
 	position.y = 50.f;
 
 	polygon = new Object(new PolygonShape(extents));
-	polygon->myPosition = position;
-	polygon->myColor = RandomColor();
+	polygon->SetPosition(position);
 	//polygon->SetOrientation(FW_DegreesToRadians(-40.f));
+	polygon->myColor = RandomColor();
 	polygon->myRestitution = 0.2f;
 	polygon->myDynamicFriction = 0.2f;
 	polygon->myStaticFriction = 0.4f;

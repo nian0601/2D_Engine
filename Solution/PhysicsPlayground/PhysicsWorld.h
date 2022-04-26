@@ -51,6 +51,8 @@ struct Object
 	void SetMass(float aMass);
 	void SetInertia(float aIntertia);
 	void SetStatic();
+
+	void SetPosition(const Vector2f& aPosition);
 	void SetOrientation(float aRadians);
 
 	Vector2f myPreviousPosition;

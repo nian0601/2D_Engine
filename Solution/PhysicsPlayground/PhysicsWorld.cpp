@@ -68,9 +68,16 @@ void Object::SetStatic()
 	myInvInertia = 0.f;
 }
 
+void Object::SetPosition(const Vector2f& aPosition)
+{
+	myPosition = aPosition;
+	myPreviousPosition = aPosition;
+}
+
 void Object::SetOrientation(float aRadians)
 {
 	myOrientation = aRadians;
+	myPreviousOrientation = myOrientation;
 	myShape->SetOrientation(aRadians);
 }
 
@@ -155,8 +162,7 @@ void PhysicsWorld::ApplyForceInRadius(const Vector2f& aCenter, float aRadius, fl
 			forceScale /= myCircleShape->myRadius;
 
 			float finalForce = FW_Lerp(aMinForce, aMaxForce, forceScale);
-			
-			object->myForces += manifold.myHitNormal * finalForce;
+			object->myVelocity += object->myInvMass * manifold.myHitNormal * finalForce;
 		}
 	}
 }

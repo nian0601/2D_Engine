@@ -6,6 +6,102 @@
 #include <FW_Assert.h>
 #include <FW_String.h>
 
+namespace Collision_Private
+{
+	bool CircleVsPolygon(const CircleShape& aCircle, const PolygonShape& aPolygon, Manifold& aManifold)
+	{
+		const CircleShape& A = aCircle;
+		const PolygonShape& B = aPolygon;
+		aManifold.myContactCount = 0;
+
+		// Transform center of the circle into B's space
+		Vector2f center = A.myObject->myPosition;
+		center = B.myModelSpace.Transpose() * (center - B.myObject->myPosition);
+
+		// Find the edge with minimum penetration
+		float separation = -FLT_MAX;
+		int faceNormal = 0;
+		for (int i = 0; i < B.myVertexCount; ++i)
+		{
+			float s = Dot(B.myNormals[i], center - B.myVertices[i]);
+			if (s > A.myRadius)
+				return false;
+
+			if (s > separation)
+			{
+				separation = s;
+				faceNormal = i;
+			}
+		}
+
+		Vector2f v1 = B.myVertices[faceNormal];
+		int i2 = faceNormal + 1 >= B.myVertexCount ? 0 : faceNormal + 1;
+		Vector2f v2 = B.myVertices[i2];
+
+		if (separation < FW_EPSILON)
+		{
+			aManifold.myObjectA = A.myObject;
+			aManifold.myObjectB = B.myObject;
+
+			aManifold.myContactCount = 1;
+			aManifold.myHitNormal = -(B.myModelSpace * B.myNormals[faceNormal]);
+			aManifold.myContacts[0] = aManifold.myHitNormal * A.myRadius + A.myObject->myPosition;
+			aManifold.myPenetrationDepth = A.myRadius;
+			return true;
+		}
+
+		float dot1 = Dot(center - v1, v2 - v1);
+		float dot2 = Dot(center - v2, v1 - v2);
+		aManifold.myPenetrationDepth = A.myRadius - separation;
+
+		if (dot1 <= 0.f)
+		{
+			if (Length2(center - v1) > FW_Square(A.myRadius))
+				return false;
+
+			aManifold.myContactCount = 1;
+
+			aManifold.myHitNormal = v1 - center;
+			aManifold.myHitNormal = B.myModelSpace * aManifold.myHitNormal;
+			Normalize(aManifold.myHitNormal);
+
+			v1 = B.myModelSpace * v1 + B.myObject->myPosition;
+			aManifold.myContacts[0] = v1;
+		}
+		else if (dot2 <= 0.f)
+		{
+			if (Length2(center - v2) > FW_Square(A.myRadius))
+				return false;
+
+			aManifold.myContactCount = 1;
+
+			aManifold.myHitNormal = v2 - center;
+			aManifold.myHitNormal = B.myModelSpace * aManifold.myHitNormal;
+			Normalize(aManifold.myHitNormal);
+
+			v2 = B.myModelSpace * v2 + B.myObject->myPosition;
+			aManifold.myContacts[0] = v2;
+		}
+		else
+		{
+			Vector2f n = B.myNormals[faceNormal];
+			if (Dot(center - v1, n) > A.myRadius)
+				return false;
+
+			aManifold.myContactCount = 1;
+
+			n = B.myModelSpace * n;
+			aManifold.myHitNormal = -n;
+			aManifold.myContacts[0] = aManifold.myHitNormal * A.myRadius + A.myObject->myPosition;
+		}
+
+		aManifold.myObjectA = A.myObject;
+		aManifold.myObjectB = B.myObject;
+
+		return true;
+	}
+}
+
 bool CircleShape::RunCollision(const Shape& aShape, Manifold& aManifold) const
 {
 	return aShape.TestCollision(*this, aManifold);
@@ -101,95 +197,97 @@ bool CircleShape::TestCollision(const AABBShape& aAABBShape, Manifold& aManifold
 
 bool CircleShape::TestCollision(const PolygonShape& aPolygonShape, Manifold& aManifold) const
 {
-	const CircleShape& A = *this;
-	const PolygonShape& B = aPolygonShape;
-	aManifold.myContactCount = 0;
+	//const CircleShape& A = *this;
+	//const PolygonShape& B = aPolygonShape;
+	//aManifold.myContactCount = 0;
+	//
+	//// Transform center of the circle into B's space
+	//Vector2f center = A.myObject->myPosition;
+	//center = B.myModelSpace.Transpose() * (center - B.myObject->myPosition);
+	//
+	//// Find the edge with minimum penetration
+	//float separation = -FLT_MAX;
+	//int faceNormal = 0;
+	//for (int i = 0; i < B.myVertexCount; ++i)
+	//{
+	//	float s = Dot(B.myNormals[i], center - B.myVertices[i]);
+	//	if (s > A.myRadius)
+	//		return false;
+	//
+	//	if (s > separation)
+	//	{
+	//		separation = s;
+	//		faceNormal = i;
+	//	}
+	//}
+	//
+	//Vector2f v1 = B.myVertices[faceNormal];
+	//int i2 = faceNormal + 1 >= B.myVertexCount ? 0 : faceNormal + 1;
+	//Vector2f v2 = B.myVertices[i2];
+	//
+	//if (separation < FW_EPSILON)
+	//{
+	//	aManifold.myObjectA = A.myObject;
+	//	aManifold.myObjectB = B.myObject;
+	//
+	//	aManifold.myContactCount = 1;
+	//	aManifold.myHitNormal = -(B.myModelSpace * B.myNormals[faceNormal]);
+	//	aManifold.myContacts[0] = aManifold.myHitNormal * A.myRadius + A.myObject->myPosition;
+	//	aManifold.myPenetrationDepth = A.myRadius;
+	//	return true;
+	//}
+	//
+	//float dot1 = Dot(center - v1, v2 - v1);
+	//float dot2 = Dot(center - v2, v1 - v2);
+	//aManifold.myPenetrationDepth = A.myRadius - separation;
+	//
+	//if (dot1 <= 0.f)
+	//{
+	//	if (Length2(center - v1) > FW_Square(A.myRadius))
+	//		return false;
+	//
+	//	aManifold.myContactCount = 1;
+	//
+	//	aManifold.myHitNormal = v1 - center;
+	//	aManifold.myHitNormal = B.myModelSpace * aManifold.myHitNormal;
+	//	Normalize(aManifold.myHitNormal);
+	//
+	//	v1 = B.myModelSpace * v1 + B.myObject->myPosition;
+	//	aManifold.myContacts[0] = v1;
+	//}
+	//else if (dot2 <= 0.f)
+	//{
+	//	if (Length2(center - v2) > FW_Square(A.myRadius))
+	//		return false;
+	//
+	//	aManifold.myContactCount = 1;
+	//
+	//	aManifold.myHitNormal = v2 - center;
+	//	aManifold.myHitNormal = B.myModelSpace * aManifold.myHitNormal;
+	//	Normalize(aManifold.myHitNormal);
+	//
+	//	v2 = B.myModelSpace * v2 + B.myObject->myPosition;
+	//	aManifold.myContacts[0] = v2;
+	//}
+	//else
+	//{
+	//	Vector2f n = B.myNormals[faceNormal];
+	//	if (Dot(center - v1, n) > A.myRadius)
+	//		return false;
+	//
+	//	aManifold.myContactCount = 1;
+	//
+	//	n = B.myModelSpace * n;
+	//	aManifold.myHitNormal = -n;
+	//	aManifold.myContacts[0] = aManifold.myHitNormal * A.myRadius + A.myObject->myPosition;
+	//}
+	//
+	//aManifold.myObjectA = A.myObject;
+	//aManifold.myObjectB = B.myObject;
+	//
+	//return true;
 
-	// Transform center of the circle into B's space
-	Vector2f center = A.myObject->myPosition;
-	center = B.myModelSpace.Transpose() * (center - B.myObject->myPosition);
-
-	// Find the edge with minimum penetration
-	float separation = -FLT_MAX;
-	int faceNormal = 0;
-	for (int i = 0; i < B.myVertexCount; ++i)
-	{
-		float s = Dot(B.myNormals[i], center - B.myVertices[i]);
-		if (s > A.myRadius)
-			return false;
-
-		if (s > separation)
-		{
-			separation = s;
-			faceNormal = i;
-		}
-	}
-
-	Vector2f v1 = B.myVertices[faceNormal];
-	int i2 = faceNormal + 1 >= B.myVertexCount ? 0 : faceNormal + 1;
-	Vector2f v2 = B.myVertices[i2];
-
-	if (separation < FW_EPSILON)
-	{
-		aManifold.myObjectA = A.myObject;
-		aManifold.myObjectB = B.myObject;
-
-		aManifold.myContactCount = 1;
-		aManifold.myHitNormal = -(B.myModelSpace * B.myNormals[faceNormal]);
-		aManifold.myContacts[0] = aManifold.myHitNormal * A.myRadius + A.myObject->myPosition;
-		aManifold.myPenetrationDepth = A.myRadius;
-		return true;
-	}
-
-	float dot1 = Dot(center - v1, v2 - v1);
-	float dot2 = Dot(center - v2, v1 - v2);
-	aManifold.myPenetrationDepth = A.myRadius - separation;
-
-	if (dot1 <= 0.f)
-	{
-		if (Length2(center - v1) > FW_Square(A.myRadius))
-			return false;
-
-		aManifold.myContactCount = 1;
-
-		aManifold.myHitNormal = v1 - center;
-		aManifold.myHitNormal = B.myModelSpace * aManifold.myHitNormal;
-		Normalize(aManifold.myHitNormal);
-
-		v1 = B.myModelSpace * v1 + B.myObject->myPosition;
-		aManifold.myContacts[0] = v1;
-	}
-	else if (dot2 <= 0.f)
-	{
-		if (Length2(center - v2) > FW_Square(A.myRadius))
-			return false;
-
-		aManifold.myContactCount = 1;
-
-		aManifold.myHitNormal = v2 - center;
-		aManifold.myHitNormal = B.myModelSpace * aManifold.myHitNormal;
-		Normalize(aManifold.myHitNormal);
-
-		v2 = B.myModelSpace * v2 + B.myObject->myPosition;
-		aManifold.myContacts[0] = v2;
-	}
-	else
-	{
-		Vector2f n = B.myNormals[faceNormal];
-		if (Dot(center - v1, n) > A.myRadius)
-			return false;
-
-		aManifold.myContactCount = 1;
-
-		n = B.myModelSpace * n;
-		aManifold.myHitNormal = -n;
-		aManifold.myContacts[0] = aManifold.myHitNormal * A.myRadius + A.myObject->myPosition;
-	}
-
-	aManifold.myObjectA = A.myObject;
-	aManifold.myObjectB = B.myObject;
-
-	return true;
+	return Collision_Private::CircleVsPolygon(*this, aPolygonShape, aManifold);
 }
 
 void CircleShape::Render() const
@@ -330,9 +428,9 @@ bool PolygonShape::RunCollision(const Shape& aShape, Manifold& aManifold) const
 
 bool PolygonShape::TestCollision(const CircleShape& aCircleShape, Manifold& aManifold) const
 {
-	aCircleShape;
-	aManifold;
-	return false;
+	bool result = Collision_Private::CircleVsPolygon(aCircleShape, *this, aManifold);
+	//aManifold.myHitNormal *= -1.f;
+	return result;
 }
 
 bool PolygonShape::TestCollision(const AABBShape& aAABBShape, Manifold& aManifold) const
