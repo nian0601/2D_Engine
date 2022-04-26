@@ -195,6 +195,14 @@ bool CircleShape::TestCollision(const PolygonShape& aPolygonShape, Manifold& aMa
 void CircleShape::Render() const
 {
 	FW_Renderer::RenderCircle(myObject->myPosition, myRadius, myObject->myColor);
+
+	FW_Matrix22 orientation(myObject->myOrientation);
+
+	Vector2f endPoint(0.f, 1.f);
+	endPoint = orientation * endPoint;
+	endPoint *= myRadius;
+	endPoint += myObject->myPosition;
+	FW_Renderer::RenderLine(myObject->myPosition, endPoint, 0xFF000000);
 }
 
 void CircleShape::ComputeMass(float aDensity)
@@ -226,7 +234,6 @@ float FindAxisLeastPenetration(const PolygonShape& A, const PolygonShape& B, int
 		n = buT * nw;
 
 		Vector2f s = B.GetSupport(-n);
-
 
 		// Get Vertex from A, transform to Worldspace and then to B's space
 		Vector2f v = A.myVertices[i];
@@ -393,6 +400,7 @@ bool PolygonShape::TestCollision(const PolygonShape& aPolygonShape, Manifold& aM
 	aManifold.myPenetrationDepth = 0.f;
 
 	int contactPoints = 0;
+
 	float separation = Dot(refFaceNormal, incidentFace[0]) - refC;
 	if (separation <= 0.f)
 	{
@@ -418,7 +426,21 @@ bool PolygonShape::TestCollision(const PolygonShape& aPolygonShape, Manifold& aM
 
 void PolygonShape::Render() const
 {
-	Vector2f p1 = myObject->myPosition + myModelSpace * myVertices[0];
+	FW_Matrix22 space;
+	space.Set(myObject->myPreviousOrientation);
+
+	Vector2f p1 = myObject->myPreviousPosition + space * myVertices[0];
+	for (int i = 1; i < myVertexCount; ++i)
+	{
+		Vector2f p2 = myObject->myPreviousPosition + space * myVertices[i];
+		FW_Renderer::RenderLine(p1, p2, myObject->myColor);
+		p1 = p2;
+	}
+
+	Vector2f p2 = myObject->myPreviousPosition + space * myVertices[0];
+	FW_Renderer::RenderLine(p1, p2, myObject->myColor);
+
+	/*Vector2f p1 = myObject->myPosition + myModelSpace * myVertices[0];
 	for (int i = 1; i < myVertexCount; ++i)
 	{
 		Vector2f p2 = myObject->myPosition + myModelSpace * myVertices[i];
@@ -427,7 +449,7 @@ void PolygonShape::Render() const
 	}
 
 	Vector2f p2 = myObject->myPosition + myModelSpace * myVertices[0];
-	FW_Renderer::RenderLine(p1, p2, myObject->myColor);
+	FW_Renderer::RenderLine(p1, p2, myObject->myColor);*/
 }
 
 void PolygonShape::SetOrientation(float aRadians)

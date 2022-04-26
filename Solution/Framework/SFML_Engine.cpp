@@ -57,13 +57,16 @@ void SFML_Engine::Run(FW_IGame& aGame)
 		SFML_Input::FlushInput(*myRenderWindow);
 		FW_Time::Update();
 
-		// Figure out a way to not clear input when the ImGUI-Widget that contains the game-texture is focused?
-		//ImGuiIO& io = ImGui::GetIO();
-		//if (io.WantCaptureKeyboard || io.WantCaptureMouse)
-		//	SFML_Input::ClearInput();
+		ImGuiIO& io = ImGui::GetIO();
+		if (io.WantCaptureKeyboard || io.WantCaptureMouse)
+			SFML_Input::ClearInput();
 
 		if (FW_Input::WasKeyReleased(FW_Input::KeyCode::ESC))
 			myRenderWindow->close();
+		if (FW_Input::WasKeyReleased(FW_Input::KeyCode::_F1))
+			myShowConsole = !myShowConsole;
+		if (FW_Input::WasKeyReleased(FW_Input::KeyCode::_F2))
+			myShowIMGuiDemoWindow = !myShowIMGuiDemoWindow;
 
 		ImGui::SFML::Update(*myRenderWindow, FW_Time::GetDelta());
 
@@ -73,13 +76,12 @@ void SFML_Engine::Run(FW_IGame& aGame)
 
 		FW_Renderer::FinishOffscreenBuffer();
 
-		BuildImGUIStuff(aGame);
+		BuildImGUIStuff();
 
 		ImGui::SFML::Render(*myRenderWindow);
 
 		FW_Renderer::Present();
 	}
-
 
 	SFML_Renderer::Shutdown();
 	SFML_AudioSystem::Shutdown();
@@ -92,43 +94,37 @@ void SFML_Engine::SetWindowPosition(int aX, int aY)
 	myRenderWindow->setPosition({ aX, aY });
 }
 
-void SFML_Engine::BuildImGUIStuff(FW_IGame& aGame)
+void SFML_Engine::BuildImGUIStuff()
 {
-	FW_String consoleTitle = "Wow amazing (";
-	consoleTitle += int(FW_Time::GetAverageFramerate());
-	consoleTitle += " fps)###DummyID";
-
-	ImVec2 imguiSize = myRenderWindow->getSize();
-	//imguiSize.x -= 20;
-	//imguiSize.y -= 20;
-	ImGui::SetNextWindowSize(imguiSize);
-	ImGui::Begin(consoleTitle.GetBuffer());
-
-	ImGui::BeginGroup();
-	
-	ImTextureID textureID = (ImTextureID)SFML_Renderer::GetOffscreenBuffer().getNativeHandle();
-	aGame.BuildGameImguiEditor(textureID);
-
+	if (myShowConsole)
 	{
-		// Console/log stuff
+		FW_String consoleTitle = "Console (";
+		consoleTitle += int(FW_Time::GetAverageFramerate());
+		consoleTitle += " fps)###DummyID";
 
-		ImGui::Text("Console & Log");
-		ImGui::BeginGroup();
+		ImGui::SetNextWindowSize({ static_cast<float>(FW_Renderer::GetScreenWidth()), 150.f });
+		ImGui::Begin(consoleTitle.GetBuffer(), nullptr, ImGuiWindowFlags_NoDecoration);
+
+		if (ImGui::IsRootWindowOrAnyChildFocused() && !ImGui::IsAnyItemActive() && !ImGui::IsMouseClicked(0))
+			ImGui::SetKeyboardFocusHere(0);
+
 		ImGui::BeginChild(ImGui::GetID((void*)(intptr_t)2), ImVec2(0, -30), true);
 
 		const FW_CircularArray<FW_String, 128>& logMessage = FW_Logger::GetAllMessages();
-		for(int i = 0; i < logMessage.myTotalCount; ++i)
+		for (int i = 0; i < logMessage.myTotalCount; ++i)
 			ImGui::Text(logMessage[i].GetBuffer());
-
-		//for (int item = 0; item < 100; item++)
-		//	ImGui::Text("Item %d", item);
 
 		ImGui::EndChild();
 
-		static char buf1[64] = ""; ImGui::InputText("Input", buf1, 64);
-		ImGui::EndGroup();
+		if (ImGui::InputText("Input", myConsoleInputBuffer, 64, ImGuiInputTextFlags_EnterReturnsTrue))
+		{
+			FW_Logger::AddMessage(myConsoleInputBuffer);
+			myConsoleInputBuffer[0] = '\0';
+		}
+
+		ImGui::End();
 	}
 
-	ImGui::EndGroup();
-	ImGui::End();
+	if(myShowIMGuiDemoWindow)
+		ImGui::ShowDemoWindow();
 }

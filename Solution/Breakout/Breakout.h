@@ -12,7 +12,6 @@ public:
 	void OnStartup() override;
 	bool Run() override;
 	void RunEditorLogic() override;
-	void BuildGameImguiEditor(unsigned int aGameOffscreenBufferTextureID) override;
 	const char* GetGameName() override { return "Breakout"; }
 	const char* GetDataFolderName() override { return "Breakout"; }
 

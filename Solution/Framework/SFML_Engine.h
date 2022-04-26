@@ -14,7 +14,10 @@ public:
 	void SetWindowPosition(int aX, int aY);
 
 private:
-	void BuildImGUIStuff(FW_IGame& aGame);
+	void BuildImGUIStuff();
 
 	sf::RenderWindow* myRenderWindow;
+	bool myShowConsole = false;
+	bool myShowIMGuiDemoWindow = false;
+	char myConsoleInputBuffer[64] = "";
 };

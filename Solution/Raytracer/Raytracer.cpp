@@ -61,17 +61,9 @@ bool Raytracer::Run()
 	if (myTexture.myTextureID != -1)
 		FW_Renderer::RenderTexture(myTexture, { 0, 0 });
 
-	return true;
-}
-
-void Raytracer::BuildGameImguiEditor(unsigned int aGameOffscreenBufferTextureID)
-{
+	ImGui::SetNextWindowPos({ 500.f, 0.f });
+	ImGui::Begin("Raytracer");
 	ImGui::BeginChild(ImGui::GetID((void*)(intptr_t)55), ImVec2(350, 500), false);
-	
-	static bool showDemoWindow = false;
-	ImGui::Checkbox("Demo Window", &showDemoWindow);
-	ImGui::ShowDemoWindow(&showDemoWindow);
-	ImGui::Separator();
 
 	switch (myCurrentState)
 	{
@@ -93,32 +85,9 @@ void Raytracer::BuildGameImguiEditor(unsigned int aGameOffscreenBufferTextureID)
 	}
 
 	ImGui::EndChild();
+	ImGui::End();
 
-	ImGui::SameLine();
-
-	ImGui::BeginChild(ImGui::GetID((void*)(intptr_t)56), ImVec2(0, 500), false);
-
-	ImGui::BeginChild(ImGui::GetID((void*)(intptr_t)57), ImVec2(0, 20), false);
-	ImGui::Indent(30.f);
-	if (ImGui::Button("Render Frame"))
-	{
-
-	}
-
-	ImGui::SameLine();
-	ImGui::Indent(200.f);
-	if (ImGui::Button("Render Video"))
-	{
-
-	}
-	ImGui::EndChild();
-
-
-	const float imageWidth = 720.f;
-	const float imageHeight = imageWidth / myRenderingParameters.myAspectRatio;
-	ImGui::Image(aGameOffscreenBufferTextureID, ImVec2(imageWidth, imageHeight), ImVec2(0, 1), ImVec2(1, 0));
-
-	ImGui::EndChild();
+	return true;
 }
 
 void Raytracer::BuildIdleStateUI()
@@ -268,144 +237,7 @@ void Raytracer::BuildIdleStateUI()
 		ImGui::EndTabBar();
 	}
 
-	/*if (ImGui::CollapsingHeader("Render Settings"))
-	{
-		if (ImGui::Button("Quick Iterations"))
-		{
-			myRenderingParameters.mySamplesPerPixel = 16;
-			myRenderingParameters.myMaxBounces = 8;
-			myRenderingParameters.myImageWidth = 480;
-			myRenderingParameters.myNumberOfThreads = 4;
-		}
-
-		if (ImGui::Button("Decent Quality"))
-		{
-			myRenderingParameters.myImageWidth = 720;
-			myRenderingParameters.mySamplesPerPixel = 100;
-			myRenderingParameters.myMaxBounces = 16;
-			myRenderingParameters.myNumberOfThreads = 4;
-		}
-
-		if (ImGui::Button("High Quality"))
-		{
-			myRenderingParameters.myImageWidth = 1920;
-			myRenderingParameters.mySamplesPerPixel = 100;
-			myRenderingParameters.myMaxBounces = 16;
-			myRenderingParameters.myNumberOfThreads = 4;
-		}
-
-		if (ImGui::Button("Highest Quality"))
-		{
-			myRenderingParameters.myImageWidth = 2560;
-			myRenderingParameters.mySamplesPerPixel = 100;
-			myRenderingParameters.myMaxBounces = 16;
-			myRenderingParameters.myNumberOfThreads = 4;
-		}
-
-		ImGui::Separator();
-
-		ImGui::DragInt("Image Width", &myRenderingParameters.myImageWidth, 1, 1, 2560);
-		ImGui::DragInt("Samples per Pixel", &myRenderingParameters.mySamplesPerPixel, 1, 1, 10000);
-		ImGui::DragInt("Max Bounces", &myRenderingParameters.myMaxBounces, 1, 1, 1000);
-		ImGui::DragInt("Threads", &myRenderingParameters.myNumberOfThreads, 1, 1, 4);
-	}*/
-
-	/*if (ImGui::CollapsingHeader("World Settings"))
-	{
-		ImGui::DragFloat3("Background Color", &myRenderingParameters.myBackgroundColor.x, 0.01f, 0.f, 1.f);
-		ImGui::Checkbox("Flat Background", &myRenderingParameters.myUseFlatBackground);
-
-		ImGui::DragFloat3("Camera Position", &myRenderingParameters.myLookFrom.x, 0.1f, -50.f, 50.f);
-		ImGui::DragFloat3("Focus Position", &myRenderingParameters.myLookAt.x, 0.1f, -50.f, 50.f);
-		ImGui::DragFloat("Focus Distance", &myRenderingParameters.myDistToFocus, 0.1f, 0.1f, 100.f);
-
-		if (ImGui::TreeNode("Objects"))
-		{
-			ImGui::BeginChild(ImGui::GetID((void*)(intptr_t)87), ImVec2(-10, 200), true);
-
-			const char* materialTypes[] = { "Lambertian", "Metallic", "Dialectrict", "Light" };
-
-			FW_GrowingArray<Sphere>& spheres = myWorld.GetAllSpheres();
-			char sphereLable[64];
-			for (int i = 0; i < spheres.Count(); ++i)
-			{
-				Sphere& sphere = spheres[i];
-
-				if (sphere.myUIName.Empty())
-					sprintf_s(sphereLable, 64, "Sphere %i", i);
-				else
-					sprintf_s(sphereLable, 64, "%s", sphere.myUIName.GetBuffer());
-
-				if (ImGui::TreeNode(sphereLable))
-				{
-					ImGui::DragFloat3("Position", &sphere.myPosition.x, 0.1f, -10.f, 10.f);
-					ImGui::DragFloat3("Color", &sphere.myMaterial.myColor.x, 0.1f, 0.f, 4.f);
-					ImGui::DragFloat("Radius", &sphere.myRadius, 1, 0.f, 100.f);
-					ImGui::Combo("Material", &sphere.myMaterial.myMaterialType, materialTypes, IM_ARRAYSIZE(materialTypes));
-
-					ImGui::DragFloat("Material Parameter", &sphere.myMaterial.myMaterialParameter, 1, 0.f, 4.f);
-
-					ImGui::TreePop();
-				}
-			}
-
-			ImGui::EndChild();
-
-			ImGui::TreePop();
-		}
-
-		if (ImGui::Button("Add Sphere"))
-		{
-			Sphere sphere;
-			sphere.myPosition = { 0.f, 0.f, 0.f };
-			sphere.myRadius = 0.5f;
-			sphere.myMaterial.myMaterialType = Material::MaterialType::Lambertian;
-			sphere.myMaterial.myMaterialParameter = 0.f;
-			sphere.myMaterial.myColor = { 1.f, 0.f, 0.f };
-
-			myWorld.AddObject(sphere);
-		}
-
-		if (ImGui::Button("Remove All"))
-		{
-			myWorld.ClearWorld();
-		}
-
-		ImGui::Spacing();
-
-		if (ImGui::Button("Load Random World"))
-		{
-			BuildRandomScene();
-		}
-	}*/
-
 	ImGui::EndChild();
-
-	/*ImGui::Spacing();
-	ImGui::Separator();
-	ImGui::Spacing();
-
-	if (ImGui::Button("Render Image"))
-		myCurrentState = RendererState::START_RENDERING_IMAGE;
-
-	if (ImGui::Button("Save Result to File"))
-		FW_Renderer::SaveTextureToFile(myTexture, "test.png");
-
-	ImGui::Separator();
-
-	ImGui::DragInt("FPS", &myRenderingParameters.myFPS, 1, 1, 144);
-	ImGui::DragFloat("Time", &myRenderingParameters.myVideoLenght, 0.1f, 0.1f, 60.f);
-
-	if (ImGui::Button("Render Video"))
-		myCurrentState = RendererState::START_RENDERING_VIDEO;
-
-	ImGui::Separator();
-
-	if (ImGui::Button("Save Scene To Disk"))
-		SaveSceneToDisk();
-
-	if (ImGui::Button("Load Scene From Disk"))
-		LoadSceneFromDisk();*/
 }
 
 void Raytracer::BuildRenderingImageStateUI()

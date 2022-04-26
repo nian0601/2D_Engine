@@ -256,23 +256,11 @@ void Breakout::RunEditorLogic()
 
 	if (myDebugDrawGameArea)
 		FW_Renderer::RenderRect(myGameArea, 0x66FFAAFF);
-}
 
-void Breakout::BuildGameImguiEditor(unsigned int aGameOffscreenBufferTextureID)
-{
-	ImGui::BeginChild(ImGui::GetID((void*)(intptr_t)55), ImVec2(250, 100), true);
-	ImGui::Checkbox("Show Demo Window", &myShowDemoWindow);
 	ImGui::Checkbox("Show Grid", &myShowGrid);
 	ImGui::Checkbox("Show Collision", &myDebugDrawCollision);
 	ImGui::Checkbox("Show GameArea", &myDebugDrawGameArea);
-	ImGui::EndChild();
-
-	ImGui::SameLine();
-
-	ImGui::Image(aGameOffscreenBufferTextureID, ImVec2(500, 500), ImVec2(0, 1), ImVec2(1, 0));
-
-	if (myShowDemoWindow)
-		ImGui::ShowDemoWindow();
+	ImGui::Separator();
 }
 
 void Breakout::SetupEditorGrid()

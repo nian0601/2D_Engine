@@ -15,6 +15,7 @@ namespace FW_Renderer
 	void Clear();
 	void FinishOffscreenBuffer();
 	void ResizeOffscreenBuffer(int aWidth, float anAspectRatio);
+	void ResizeOffscreenBuffer(int aWidth, int aHeight);
 	void Present();
 
 	void RenderLine(const Vector2i& aStart, const Vector2i& aEnd, int aColor = 0xFFFFFFFF);

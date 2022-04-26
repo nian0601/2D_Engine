@@ -52,6 +52,9 @@ struct Object
 	void SetInertia(float aIntertia);
 	void SetStatic();
 	void SetOrientation(float aRadians);
+
+	Vector2f myPreviousPosition;
+	float myPreviousOrientation = 0.f;
 };
 
 struct Manifold

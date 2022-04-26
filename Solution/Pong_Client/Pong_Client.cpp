@@ -86,6 +86,11 @@ bool Pong_Client::Run()
 	}
 
 	//FW_Time::ClampToFramerate(1.f / 60.f);
+
+	ImGui::Begin("Pong Client");
+	ImGui::Checkbox("Enable Interpolation", &myEnablePositionInterpolation);
+	ImGui::End();
+
 	return true;
 }
 
@@ -101,21 +106,6 @@ void Pong_Client::OnShutdown()
 	}
 
 	FW_Logger::AddMessage("Sent Disconnect-message");
-}
-
-void Pong_Client::BuildGameImguiEditor(unsigned int aGameOffscreenBufferTextureID)
-{
-	ImGui::BeginChild(ImGui::GetID((void*)(intptr_t)55), ImVec2(250, 100), true);
-	ImGui::Checkbox("Show Demo Window", &myShowDemoWindow);
-	ImGui::Checkbox("Enable Interpolation", &myEnablePositionInterpolation);
-	ImGui::EndChild();
-	
-	ImGui::SameLine();
-	
-	ImGui::Image(aGameOffscreenBufferTextureID, ImVec2(500, 500), ImVec2(0, 1), ImVec2(1, 0));
-
-	if (myShowDemoWindow)
-		ImGui::ShowDemoWindow();
 }
 
 void Pong_Client::RenderEntity(const Vector2f& aPosition, int aColor)

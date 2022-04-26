@@ -29,7 +29,6 @@ public:
 
 	bool Run() override;
 	void OnShutdown() override;
-	void BuildGameImguiEditor(unsigned int aGameOffscreenBufferTextureID) override;
 
 private:
 	void RenderEntity(const Vector2f& aPosition, int aColor);

@@ -66,7 +66,7 @@ namespace SFML_Renderer
 	void Init(sf::RenderWindow* aRenderWindow)
 	{
 		ourRenderWindow = aRenderWindow;
-		FW_Renderer::ResizeOffscreenBuffer(400, 16.f / 9.f);
+		FW_Renderer::ResizeOffscreenBuffer(ourRenderWindow->getSize().x, 16.f / 9.f);
 	}
 
 	void Shutdown()
@@ -124,6 +124,11 @@ namespace FW_Renderer
 	void FinishOffscreenBuffer()
 	{
 		SFML_Renderer::ourOffscreenBuffer->display();
+
+		sf::Sprite sprite;
+		sprite.setTexture(SFML_Renderer::ourOffscreenBuffer->getTexture());
+		sprite.setPosition({ 0.f, 0.f });
+		SFML_Renderer::ourRenderWindow->draw(sprite);
 	}
 
 	void ResizeOffscreenBuffer(int aWidth, float anAspectRatio)
@@ -131,6 +136,13 @@ namespace FW_Renderer
 		delete SFML_Renderer::ourOffscreenBuffer;
 		SFML_Renderer::ourOffscreenBuffer = new sf::RenderTexture();
 		SFML_Renderer::ourOffscreenBuffer->create(aWidth, static_cast<int>(aWidth / anAspectRatio));
+	}
+
+	void ResizeOffscreenBuffer(int aWidth, int aHeight)
+	{
+		delete SFML_Renderer::ourOffscreenBuffer;
+		SFML_Renderer::ourOffscreenBuffer = new sf::RenderTexture();
+		SFML_Renderer::ourOffscreenBuffer->create(aWidth, aHeight);
 	}
 
 	void Present()

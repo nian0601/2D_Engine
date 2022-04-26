@@ -4,8 +4,6 @@
 #include <FW_Math.h>
 #include <FW_Renderer.h>
 
-
-
 Object::Object(Shape* aShape)
 {
 	myShape = aShape;
@@ -88,7 +86,6 @@ PhysicsWorld::PhysicsWorld()
 	myCircleObject = new Object(myCircleShape);
 }
 
-
 PhysicsWorld::~PhysicsWorld()
 {
 	delete myCircleObject;
@@ -102,7 +99,9 @@ void PhysicsWorld::Tick()
 
 	for (int i = 0; i < myObjects.Count(); ++i)
 	{
-		const Object* A = myObjects[i];
+		Object* A = myObjects[i];
+		A->myPreviousPosition = A->myPosition;
+		A->myPreviousOrientation = A->myOrientation;
 
 		for (int j = i + 1; j < myObjects.Count(); ++j)
 		{
@@ -125,8 +124,8 @@ void PhysicsWorld::Tick()
 		for (const Manifold& manifold : myContacts)
 			ResolveCollision(manifold);
 
-		for (MaxDistanceConstraint* constraint : myMaxDistanceConstraints)
-			constraint->ResolveConstraint();
+		//for (MaxDistanceConstraint* constraint : myMaxDistanceConstraints)
+		//	constraint->ResolveConstraint();
 	}
 
 	for (Object* object : myObjects)
@@ -246,8 +245,8 @@ void PhysicsWorld::PositionalCorrection(const Manifold& aManifold)
 	Object& A = *aManifold.myObjectA;
 	Object& B = *aManifold.myObjectB;
 
-	const float percent = 0.4f;
 	const float slop = 0.05f;
+	const float percent = 0.3f;
 	Vector2f correction = (FW_Max(aManifold.myPenetrationDepth - slop, 0.f) / (A.myInvMass + B.myInvMass)) * percent * aManifold.myHitNormal;
 
 	A.myPosition -= A.myInvMass * correction;

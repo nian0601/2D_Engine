@@ -118,14 +118,9 @@ bool PhysicsPlayground::Run()
 		}
 	}
 
-	return true;
-}
-
-void PhysicsPlayground::BuildGameImguiEditor(unsigned int aGameOffscreenBufferTextureID)
-{
-	ImGui::ShowDemoWindow();
-
-	ImGui::BeginChild(ImGui::GetID((void*)(intptr_t)55), ImVec2(350, 500), false);
+	ImGui::SetNextWindowSize({ 400.f, static_cast<float>(FW_Renderer::GetScreenHeight() - 10.f) });
+	ImGui::SetNextWindowPos({ static_cast<float>(FW_Renderer::GetScreenWidth()) - 405.f, 5.f });
+	ImGui::Begin("PhysicsPlayground", nullptr, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize);
 
 	ImGui::Checkbox("Single Frame Mode", &myIsInSingleFrameMode);
 	ImGui::SameLine();
@@ -134,7 +129,7 @@ void PhysicsPlayground::BuildGameImguiEditor(unsigned int aGameOffscreenBufferTe
 
 	ImGui::DragFloat("Gravity Scale", &PhysicsWorld::ourGravityScale, 0.1f, -20.f, 20.f);
 	ImGui::Checkbox("Render Contacts", &myRenderContacts);
-	
+
 
 	ImGui::Separator();
 
@@ -165,19 +160,10 @@ void PhysicsPlayground::BuildGameImguiEditor(unsigned int aGameOffscreenBufferTe
 			myChainBuilder = nullptr;
 		}
 	}
-	
 
-	ImGui::EndChild();
+	ImGui::End();
 
-	ImGui::SameLine();
-
-	ImGui::BeginChild(ImGui::GetID((void*)(intptr_t)56), ImVec2(0, 500), false);
-
-	const float imageWidth = static_cast<float>(FW_Renderer::GetOffscreenBufferWidth());
-	const float imageHeight = static_cast<float>(FW_Renderer::GetOffscreenBufferHeight());
-	ImGui::Image(aGameOffscreenBufferTextureID, ImVec2(imageWidth, imageHeight), ImVec2(0, 1), ImVec2(1, 0));
-
-	ImGui::EndChild();
+	return true;
 }
 
 void PhysicsPlayground::GenerateScene(SceneType aSceneType)
@@ -359,10 +345,12 @@ void PhysicsPlayground::GeneratePolygonScene()
 	polygon->myRestitution = 0.2f;
 	polygon->myDynamicFriction = 0.2f;
 	polygon->myStaticFriction = 0.4f;
+	//polygon->SetInertia(0.f);
+	
 
 	myPhysicsWorld.AddObject(polygon);
 
-	extents.x = 60.f;
+	extents.x = 200.f;
 	extents.y = 40.f;
 
 	position.x = 200.f;
@@ -371,10 +359,11 @@ void PhysicsPlayground::GeneratePolygonScene()
 	polygon = new Object(new PolygonShape(extents));
 	polygon->myPosition = position;
 	polygon->myColor = RandomColor();
-	polygon->SetOrientation(FW_DegreesToRadians(-40.f));
+	//polygon->SetOrientation(FW_DegreesToRadians(-40.f));
 	polygon->myRestitution = 0.2f;
 	polygon->myDynamicFriction = 0.2f;
 	polygon->myStaticFriction = 0.4f;
+	//polygon->SetInertia(0.f);
 
 	myPhysicsWorld.AddObject(polygon);
 }

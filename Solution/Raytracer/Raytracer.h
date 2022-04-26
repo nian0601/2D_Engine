@@ -23,7 +23,6 @@ public:
 	void OnShutdown() override;
 	bool Run() override;
 
-	void BuildGameImguiEditor(unsigned int aGameOffscreenBufferTextureID) override;
 	void BuildIdleStateUI();
 	void BuildRenderingImageStateUI();
 	void BuildRenderingVideoStateUI();

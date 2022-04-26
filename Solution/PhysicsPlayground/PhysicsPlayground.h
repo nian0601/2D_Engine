@@ -15,8 +15,6 @@ public:
 	void OnShutdown() override;
 	bool Run() override;
 
-	void BuildGameImguiEditor(unsigned int aGameOffscreenBufferTextureID) override;
-
 
 	const char* GetGameName() override { return "PhysicsPlayground"; }
 	const char* GetDataFolderName() override { return "PhysicsPlayground"; }
