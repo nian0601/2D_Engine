@@ -3,7 +3,6 @@
 #include <FW_Matrix22.h>
 
 struct CircleShape;
-struct AABBShape;
 struct PolygonShape;
 
 struct Manifold;
@@ -15,7 +14,6 @@ struct Shape
 	virtual bool RunCollision(const Shape& aShape, Manifold& aManifold) const = 0;
 
 	virtual bool TestCollision(const CircleShape& aCircleShape, Manifold& aManifold) const = 0;
-	virtual bool TestCollision(const AABBShape& aAABBShape, Manifold& aManifold) const = 0;
 	virtual bool TestCollision(const PolygonShape& aPolygonShape, Manifold& aManifold) const = 0;
 
 	virtual void Render() const = 0;
@@ -36,7 +34,6 @@ struct CircleShape : public Shape
 
 	bool RunCollision(const Shape& aShape, Manifold& aManifold) const;
 	bool TestCollision(const CircleShape& aCircleShape, Manifold& aManifold) const override;
-	bool TestCollision(const AABBShape& aAABBShape, Manifold& aManifold) const override;
 	bool TestCollision(const PolygonShape& aPolygonShape, Manifold& aManifold) const override;
 
 	void Render() const override;
@@ -46,19 +43,16 @@ struct CircleShape : public Shape
 
 struct PolygonShape : public Shape
 {
-	PolygonShape(const Vector2f& aSize);
+	PolygonShape() {}
 
 	bool RunCollision(const Shape& aShape, Manifold& aManifold) const;
 	bool TestCollision(const CircleShape& aCircleShape, Manifold& aManifold) const override;
-	bool TestCollision(const AABBShape& aAABBShape, Manifold& aManifold) const override;
 	bool TestCollision(const PolygonShape& aPolygonShape, Manifold& aManifold) const override;
 
 	void Render() const override;
 
 	void SetOrientation(float aRadians) override;
 	void ComputeMass(float aDensity) override;
-
-	void MakeBox(const Vector2f& aSize);
 
 	Vector2f GetSupport(const Vector2f& aDirection) const;
 
@@ -71,18 +65,13 @@ struct PolygonShape : public Shape
 	FW_Matrix22 myModelSpace;
 };
 
-struct AABBShape : public Shape
+struct AABBShape : public PolygonShape
 {
-	AABBShape(const Rectf& aRect)
-		: myRect(aRect)
-	{}
-
-	Rectf myRect;
-
-	bool RunCollision(const Shape& aShape, Manifold& aManifold) const;
-	bool TestCollision(const CircleShape& aCircleShape, Manifold& aManifold) const override;
-	bool TestCollision(const AABBShape& aAABBShape, Manifold& aManifold) const override;
-	bool TestCollision(const PolygonShape& aPolygonShape, Manifold& aManifold) const override;
+	AABBShape(const Vector2f& aSize);
 
 	void Render() const override;
+
+private:
+	// Mutable so that we can set the position of the rect when rendering
+	mutable Rectf myRect;
 };

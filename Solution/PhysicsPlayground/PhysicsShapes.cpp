@@ -137,156 +137,8 @@ bool CircleShape::TestCollision(const CircleShape& aCircleShape, Manifold& aMani
 	return true;
 }
 
-bool CircleShape::TestCollision(const AABBShape& aAABBShape, Manifold& aManifold) const
-{
-	Vector2f n = aAABBShape.myObject->myPosition - myObject->myPosition;
-	Vector2f closest = n;
-
-	float halfXExtent = aAABBShape.myRect.myExtents.x * 0.5f;
-	float halfYExtent = aAABBShape.myRect.myExtents.y * 0.5f;
-
-	closest.x = FW_Clamp(closest.x, -halfXExtent, halfXExtent);
-	closest.y = FW_Clamp(closest.y, -halfYExtent, halfYExtent);
-
-	bool inside = false;
-	if (n == closest)
-	{
-		inside = true;
-
-		if (abs(n.x) > abs(n.y))
-		{
-			if (closest.x > 0.f)
-				closest.x = halfXExtent;
-			else
-				closest.x = -halfXExtent;
-		}
-		else
-		{
-			if (closest.y > 0.f)
-				closest.y = halfYExtent;
-			else
-				closest.y = -halfYExtent;
-		}
-	}
-
-	Vector2f normal = n - closest;
-	float distance = Length2(normal);
-	float radius = myRadius;
-
-	if (distance > radius * radius && !inside)
-		return false;
-
-	distance = sqrt(distance);
-	Normalize(normal);
-
-	if (inside)
-	{
-		aManifold.myHitNormal = -normal;
-		aManifold.myPenetrationDepth = radius - distance;
-	}
-	else
-	{
-		aManifold.myHitNormal = normal;
-		aManifold.myPenetrationDepth = radius - distance;
-	}
-
-	aManifold.myObjectA = myObject;
-	aManifold.myObjectB = aAABBShape.myObject;
-	return true;
-}
-
 bool CircleShape::TestCollision(const PolygonShape& aPolygonShape, Manifold& aManifold) const
 {
-	//const CircleShape& A = *this;
-	//const PolygonShape& B = aPolygonShape;
-	//aManifold.myContactCount = 0;
-	//
-	//// Transform center of the circle into B's space
-	//Vector2f center = A.myObject->myPosition;
-	//center = B.myModelSpace.Transpose() * (center - B.myObject->myPosition);
-	//
-	//// Find the edge with minimum penetration
-	//float separation = -FLT_MAX;
-	//int faceNormal = 0;
-	//for (int i = 0; i < B.myVertexCount; ++i)
-	//{
-	//	float s = Dot(B.myNormals[i], center - B.myVertices[i]);
-	//	if (s > A.myRadius)
-	//		return false;
-	//
-	//	if (s > separation)
-	//	{
-	//		separation = s;
-	//		faceNormal = i;
-	//	}
-	//}
-	//
-	//Vector2f v1 = B.myVertices[faceNormal];
-	//int i2 = faceNormal + 1 >= B.myVertexCount ? 0 : faceNormal + 1;
-	//Vector2f v2 = B.myVertices[i2];
-	//
-	//if (separation < FW_EPSILON)
-	//{
-	//	aManifold.myObjectA = A.myObject;
-	//	aManifold.myObjectB = B.myObject;
-	//
-	//	aManifold.myContactCount = 1;
-	//	aManifold.myHitNormal = -(B.myModelSpace * B.myNormals[faceNormal]);
-	//	aManifold.myContacts[0] = aManifold.myHitNormal * A.myRadius + A.myObject->myPosition;
-	//	aManifold.myPenetrationDepth = A.myRadius;
-	//	return true;
-	//}
-	//
-	//float dot1 = Dot(center - v1, v2 - v1);
-	//float dot2 = Dot(center - v2, v1 - v2);
-	//aManifold.myPenetrationDepth = A.myRadius - separation;
-	//
-	//if (dot1 <= 0.f)
-	//{
-	//	if (Length2(center - v1) > FW_Square(A.myRadius))
-	//		return false;
-	//
-	//	aManifold.myContactCount = 1;
-	//
-	//	aManifold.myHitNormal = v1 - center;
-	//	aManifold.myHitNormal = B.myModelSpace * aManifold.myHitNormal;
-	//	Normalize(aManifold.myHitNormal);
-	//
-	//	v1 = B.myModelSpace * v1 + B.myObject->myPosition;
-	//	aManifold.myContacts[0] = v1;
-	//}
-	//else if (dot2 <= 0.f)
-	//{
-	//	if (Length2(center - v2) > FW_Square(A.myRadius))
-	//		return false;
-	//
-	//	aManifold.myContactCount = 1;
-	//
-	//	aManifold.myHitNormal = v2 - center;
-	//	aManifold.myHitNormal = B.myModelSpace * aManifold.myHitNormal;
-	//	Normalize(aManifold.myHitNormal);
-	//
-	//	v2 = B.myModelSpace * v2 + B.myObject->myPosition;
-	//	aManifold.myContacts[0] = v2;
-	//}
-	//else
-	//{
-	//	Vector2f n = B.myNormals[faceNormal];
-	//	if (Dot(center - v1, n) > A.myRadius)
-	//		return false;
-	//
-	//	aManifold.myContactCount = 1;
-	//
-	//	n = B.myModelSpace * n;
-	//	aManifold.myHitNormal = -n;
-	//	aManifold.myContacts[0] = aManifold.myHitNormal * A.myRadius + A.myObject->myPosition;
-	//}
-	//
-	//aManifold.myObjectA = A.myObject;
-	//aManifold.myObjectB = B.myObject;
-	//
-	//return true;
-
 	return Collision_Private::CircleVsPolygon(*this, aPolygonShape, aManifold);
 }
 
@@ -416,11 +268,6 @@ bool BiasGreaterThan(float a, float b)
 	return a >= b * biasRelative + a * biasAbsolute;
 }
 
-PolygonShape::PolygonShape(const Vector2f& aSize)
-{
-	MakeBox(aSize);
-}
-
 bool PolygonShape::RunCollision(const Shape& aShape, Manifold& aManifold) const
 {
 	return aShape.TestCollision(*this, aManifold);
@@ -429,15 +276,7 @@ bool PolygonShape::RunCollision(const Shape& aShape, Manifold& aManifold) const
 bool PolygonShape::TestCollision(const CircleShape& aCircleShape, Manifold& aManifold) const
 {
 	bool result = Collision_Private::CircleVsPolygon(aCircleShape, *this, aManifold);
-	//aManifold.myHitNormal *= -1.f;
 	return result;
-}
-
-bool PolygonShape::TestCollision(const AABBShape& aAABBShape, Manifold& aManifold) const
-{
-	aAABBShape;
-	aManifold;
-	return false;
 }
 
 bool PolygonShape::TestCollision(const PolygonShape& aPolygonShape, Manifold& aManifold) const
@@ -589,21 +428,6 @@ void PolygonShape::ComputeMass(float aDensity)
 	myObject->SetInertia(aDensity * inertia);
 }
 
-void PolygonShape::MakeBox(const Vector2f& aSize)
-{
-	Vector2f halfSize = aSize * 0.5f;
-
-	myVertexCount = 4;
-	myVertices[0] = { -halfSize.x, -halfSize.y };
-	myVertices[1] = {  halfSize.x, -halfSize.y };
-	myVertices[2] = {  halfSize.x,  halfSize.y };
-	myVertices[3] = { -halfSize.x,  halfSize.y };
-	myNormals[0] = {  0.f, -1.f };
-	myNormals[1] = {  1.f,  0.f };
-	myNormals[2] = {  0.f,  1.f };
-	myNormals[3] = { -1.f,  0.f };
-}
-
 Vector2f PolygonShape::GetSupport(const Vector2f& aDirection) const
 {
 	float bestProjection = -FLT_MAX;
@@ -624,135 +448,25 @@ Vector2f PolygonShape::GetSupport(const Vector2f& aDirection) const
 	return bestVertex;
 }
 
-//////////////////////////////////////////////////////////////////////////
-
-bool AABBShape::RunCollision(const Shape& aShape, Manifold& aManifold) const
+AABBShape::AABBShape(const Vector2f& aSize)
 {
-	return aShape.TestCollision(*this, aManifold);
-}
+	Vector2f halfSize = aSize * 0.5f;
 
-bool AABBShape::TestCollision(const CircleShape& aCircleShape, Manifold& aManifold) const
-{
-	Vector2f n = aCircleShape.myObject->myPosition - myObject->myPosition;
-	Vector2f closest = n;
+	myVertexCount = 4;
+	myVertices[0] = { -halfSize.x, -halfSize.y };
+	myVertices[1] = { halfSize.x, -halfSize.y };
+	myVertices[2] = { halfSize.x,  halfSize.y };
+	myVertices[3] = { -halfSize.x,  halfSize.y };
+	myNormals[0] = { 0.f, -1.f };
+	myNormals[1] = { 1.f,  0.f };
+	myNormals[2] = { 0.f,  1.f };
+	myNormals[3] = { -1.f,  0.f };
 
-	float halfXExtent = myRect.myExtents.x * 0.5f;
-	float halfYExtent = myRect.myExtents.y * 0.5f;
-
-	closest.x = FW_Clamp(closest.x, -halfXExtent, halfXExtent);
-	closest.y = FW_Clamp(closest.y, -halfYExtent, halfYExtent);
-
-	bool inside = false;
-	if (n == closest)
-	{
-		inside = true;
-
-		if (abs(n.x) > abs(n.y))
-		{
-			if (closest.x > 0.f)
-				closest.x = halfXExtent;
-			else
-				closest.x = -halfXExtent;
-		}
-		else
-		{
-			if (closest.y > 0.f)
-				closest.y = halfYExtent;
-			else
-				closest.y = -halfYExtent;
-		}
-	}
-
-	Vector2f normal = n - closest;
-	float distance = Length2(normal);
-	float radius = aCircleShape.myRadius;
-
-	if (distance > radius * radius && !inside)
-		return false;
-
-	distance = sqrt(distance);
-	Normalize(normal);
-
-	if (inside)
-	{
-		aManifold.myHitNormal = -normal;
-		aManifold.myPenetrationDepth = radius - distance;
-	}
-	else
-	{
-		aManifold.myHitNormal = normal;
-		aManifold.myPenetrationDepth = radius - distance;
-	}
-
-	aManifold.myObjectA = myObject;
-	aManifold.myObjectB = aCircleShape.myObject;
-	return true;
-}
-
-bool AABBShape::TestCollision(const AABBShape& aAABBShape, Manifold& aManifold) const
-{
-	Object* A = myObject;
-	Object* B = aAABBShape.myObject;
-
-	Vector2f n = B->myPosition - A->myPosition;
-
-	Rectf abox = myRect;
-	Rectf bbox = aAABBShape.myRect;
-
-	float a_extent_x = abox.myExtents.x * 0.5f;
-	float b_extent_x = bbox.myExtents.x * 0.5f;
-
-	float x_overlap = a_extent_x + b_extent_x - abs(n.x);
-
-	if (x_overlap > 0.f)
-	{
-		float a_extent_y = abox.myExtents.y * 0.5f;
-		float b_extent_y = bbox.myExtents.y * 0.5f;
-
-		float y_overlap = a_extent_y + b_extent_y - abs(n.y);
-
-		if (y_overlap > 0.f)
-		{
-			if (x_overlap < y_overlap)
-			{
-				if (n.x < 0.f)
-					aManifold.myHitNormal = { -1.f, 0.f };
-				else
-					aManifold.myHitNormal = { 1.f, 0.f }; // Should this be {1.f, 0.f}?
-
-				aManifold.myObjectA = myObject;
-				aManifold.myObjectB = aAABBShape.myObject;
-				aManifold.myPenetrationDepth = x_overlap;
-				return true;
-			}
-			else
-			{
-				if (n.y < 0.f)
-					aManifold.myHitNormal = { 0.f, -1.f };
-				else
-					aManifold.myHitNormal = { 0.f, 1.f };
-
-				aManifold.myObjectA = myObject;
-				aManifold.myObjectB = aAABBShape.myObject;
-				aManifold.myPenetrationDepth = y_overlap;
-				return true;
-			}
-		}
-
-
-	}
-
-	return false;
-}
-
-bool AABBShape::TestCollision(const PolygonShape& /*aPolygonShape*/, Manifold& /*aManifold*/) const
-{
-	return false;
+	myRect = MakeRect({ 0.f, 0.f }, aSize);
 }
 
 void AABBShape::Render() const
 {
-	Rectf tempRect = myRect;
-	SetRectPosition(tempRect, myObject->myPosition);
-	FW_Renderer::RenderRect(tempRect, myObject->myColor);
+	myRect.myCenterPos = myObject->myPreviousPosition;
+	FW_Renderer::RenderRect(myRect, myObject->myColor, myObject->myPreviousOrientation);
 }

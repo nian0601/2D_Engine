@@ -127,13 +127,17 @@
     <ClInclude Include="ChainBuilder.h" />
     <ClInclude Include="PhysicsPlayground.h" />
     <ClInclude Include="PhysicsShapes.h" />
+    <ClInclude Include="PhysicsTestingTestbed.h" />
     <ClInclude Include="PhysicsWorld.h" />
+    <ClInclude Include="Spareparty.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="ChainBuilder.cpp" />
     <ClCompile Include="PhysicsPlayground.cpp" />
     <ClCompile Include="PhysicsShapes.cpp" />
+    <ClCompile Include="PhysicsTestingTestbed.cpp" />
     <ClCompile Include="PhysicsWorld.cpp" />
+    <ClCompile Include="Spareparty.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

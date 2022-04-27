@@ -5,11 +5,15 @@
     <ClInclude Include="PhysicsWorld.h" />
     <ClInclude Include="ChainBuilder.h" />
     <ClInclude Include="PhysicsShapes.h" />
+    <ClInclude Include="PhysicsTestingTestbed.h" />
+    <ClInclude Include="Spareparty.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="PhysicsPlayground.cpp" />
     <ClCompile Include="PhysicsWorld.cpp" />
     <ClCompile Include="ChainBuilder.cpp" />
     <ClCompile Include="PhysicsShapes.cpp" />
+    <ClCompile Include="PhysicsTestingTestbed.cpp" />
+    <ClCompile Include="Spareparty.cpp" />
   </ItemGroup>
 </Project>
