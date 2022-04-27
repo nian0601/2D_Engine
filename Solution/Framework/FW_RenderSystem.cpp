@@ -11,8 +11,8 @@ void FW_RenderSystem::Run(FW_EntityManager& aEntityManger)
 	{
 		if (const TranslationComponent* translation = aEntityManger.FindComponent<TranslationComponent>(render.myEntity))
 		{
-			pos.x = static_cast<int>(translation->myPosition.x) - render.mySpriteSize.x / 2;
-			pos.y = static_cast<int>(translation->myPosition.y) - render.mySpriteSize.y / 2;
+			pos.x = static_cast<int>(translation->myPosition.x);
+			pos.y = static_cast<int>(translation->myPosition.y);
 			FW_Renderer::RenderTexture(render.myTexture.myTextureID, pos, render.mySpriteSize, render.myTextureRect);
 		}
 	}
