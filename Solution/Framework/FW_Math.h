@@ -134,3 +134,17 @@ inline float FW_Equal(float A, float B)
 {
 	return abs(A - B) <= FW_EPSILON;
 }
+
+inline int FW_RandomColor()
+{
+	int color = 0;
+
+	Vector3f randColor = FW_RandomVector3f(0.f, 1.f);
+
+	color |= unsigned char(FW_Clamp(randColor.x, 0.f, 0.999f) * 255.99f) << 0;
+	color |= unsigned char(FW_Clamp(randColor.y, 0.f, 0.999f) * 255.99f) << 8;
+	color |= unsigned char(FW_Clamp(randColor.z, 0.f, 0.999f) * 255.99f) << 16;
+	color |= 255 << 24;
+
+	return color;
+}

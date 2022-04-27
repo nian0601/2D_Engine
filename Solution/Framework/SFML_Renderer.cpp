@@ -13,6 +13,7 @@
 #include <assert.h>
 #include <windows.h>
 #include <sstream>
+#include "FW_Math.h"
 
 namespace SFML_Renderer
 {
@@ -174,11 +175,12 @@ namespace FW_Renderer
 		SFML_Renderer::ourOffscreenBuffer->draw(line);
 	}
 
-	void RenderRect(const Rectf& aRect, int aColor)
+	void RenderRect(const Rectf& aRect, int aColor, float aRotationInRadians)
 	{
 		sf::RectangleShape& rect = SFML_Renderer::ourRectangleShape;
-		rect.setPosition({ float(aRect.myTopLeft.x), float(aRect.myTopLeft.y) });
-
+		rect.setOrigin({ aRect.myExtents.x * 0.5f, aRect.myExtents.y * 0.5f });
+		rect.setPosition({ aRect.myCenterPos.x, aRect.myCenterPos.y });
+		rect.setRotation(FW_RadiansToDegrees(aRotationInRadians));
 		if (aRect.myExtents != SFML_Renderer::ourCurrentRectangleSize)
 		{
 			SFML_Renderer::ourCurrentRectangleSize = aRect.myExtents;
