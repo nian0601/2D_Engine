@@ -16,6 +16,7 @@
 #include "FW_String.h"
 #include "FW_Logger.h"
 #include "FW_LevelLoader.h"
+#include "FW_FileSystem.h"
 
 SFML_Engine::SFML_Engine(int aWidth, int aHeight, const char* aWindowTitle)
 {
@@ -31,6 +32,7 @@ SFML_Engine::SFML_Engine(int aWidth, int aHeight, const char* aWindowTitle)
 void SFML_Engine::Run(FW_IGame& aGame)
 {
 	myRenderWindow->setTitle(aGame.GetGameName());
+	FW_FileSystem::SetDataFolder(aGame.GetDataFolderName());
 	SFML_Renderer::SetDataFolder(aGame.GetDataFolderName());
 	SFML_AudioSystem::SetDataFolder(aGame.GetDataFolderName());
 	FW_LevelLoader::SetDataFolder(aGame.GetDataFolderName());

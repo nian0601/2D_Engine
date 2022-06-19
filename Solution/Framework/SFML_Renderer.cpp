@@ -37,6 +37,7 @@ namespace SFML_Renderer
 
 	static std::string ourAssetPath;
 
+	
 	sf::Texture* GetSFMLTexture(int aTextureID)
 	{
 		for (CachedTexture& cachedTexture : ourCachedTextures)
@@ -250,7 +251,7 @@ namespace FW_Renderer
 			rect.setOrigin({ aSpriteRect.myExtents.x * 0.5f, aSpriteRect.myExtents.y * 0.5f });
 			rect.setPosition({ float(aSpriteRect.myCenterPos.x), float(aSpriteRect.myCenterPos.y) });
 
-			if (aSpriteRect.myExtents.x != SFML_Renderer::ourCurrentRectangleSize.x && aSpriteRect.myExtents.y != SFML_Renderer::ourCurrentRectangleSize.y)
+			if (aSpriteRect.myExtents.x != SFML_Renderer::ourCurrentRectangleSize.x || aSpriteRect.myExtents.y != SFML_Renderer::ourCurrentRectangleSize.y)
 			{
 				SFML_Renderer::ourCurrentRectangleSize.x = static_cast<float>(aSpriteRect.myExtents.x);
 				SFML_Renderer::ourCurrentRectangleSize.y = static_cast<float>(aSpriteRect.myExtents.y);

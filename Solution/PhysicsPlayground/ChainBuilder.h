@@ -3,7 +3,7 @@
 #include <FW_Vector2.h>
 
 class PhysicsWorld;
-struct Object;
+struct PhysicsObject;
 struct MaxDistanceConstraint;
 
 class ChainBuilder
@@ -16,7 +16,7 @@ public:
 
 private:
 	PhysicsWorld& myPhysicsWorld;
-	FW_GrowingArray<Object*> myObjects;
+	FW_GrowingArray<PhysicsObject*> myObjects;
 	FW_GrowingArray<MaxDistanceConstraint*> myConstraints;
 
 	float myAnchorSize;

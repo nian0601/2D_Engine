@@ -13,4 +13,5 @@ namespace SFML_Renderer
 	void SetDataFolder(const char* aFolderName);
 
 	const sf::Texture& GetOffscreenBuffer();
+	sf::Texture* GetSFMLTexture(int aTextureID);
 }

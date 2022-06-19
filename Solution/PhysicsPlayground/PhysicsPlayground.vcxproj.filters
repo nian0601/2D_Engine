@@ -3,17 +3,33 @@
   <ItemGroup>
     <ClInclude Include="PhysicsPlayground.h" />
     <ClInclude Include="PhysicsWorld.h" />
-    <ClInclude Include="ChainBuilder.h" />
     <ClInclude Include="PhysicsShapes.h" />
-    <ClInclude Include="PhysicsTestingTestbed.h" />
     <ClInclude Include="Spareparty.h" />
+    <ClInclude Include="PhysicsTestingTestbed.h">
+      <Filter>Testbed</Filter>
+    </ClInclude>
+    <ClInclude Include="ChainBuilder.h">
+      <Filter>Testbed</Filter>
+    </ClInclude>
+    <ClInclude Include="PhysicsSystem.h" />
+    <ClInclude Include="SparepartyComponents.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="PhysicsPlayground.cpp" />
     <ClCompile Include="PhysicsWorld.cpp" />
-    <ClCompile Include="ChainBuilder.cpp" />
     <ClCompile Include="PhysicsShapes.cpp" />
-    <ClCompile Include="PhysicsTestingTestbed.cpp" />
     <ClCompile Include="Spareparty.cpp" />
+    <ClCompile Include="PhysicsTestingTestbed.cpp">
+      <Filter>Testbed</Filter>
+    </ClCompile>
+    <ClCompile Include="ChainBuilder.cpp">
+      <Filter>Testbed</Filter>
+    </ClCompile>
+    <ClCompile Include="PhysicsSystem.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="Testbed">
+      <UniqueIdentifier>{74d55c43-878f-4901-883a-3f432b6da897}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
 </Project>

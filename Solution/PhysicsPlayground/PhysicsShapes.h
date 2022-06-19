@@ -6,12 +6,12 @@ struct CircleShape;
 struct PolygonShape;
 
 struct Manifold;
-struct Object;
+struct PhysicsObject;
 
-struct Shape
+struct PhysicsShape
 {
-	virtual ~Shape() {}
-	virtual bool RunCollision(const Shape& aShape, Manifold& aManifold) const = 0;
+	virtual ~PhysicsShape() {}
+	virtual bool RunCollision(const PhysicsShape& aShape, Manifold& aManifold) const = 0;
 
 	virtual bool TestCollision(const CircleShape& aCircleShape, Manifold& aManifold) const = 0;
 	virtual bool TestCollision(const PolygonShape& aPolygonShape, Manifold& aManifold) const = 0;
@@ -21,10 +21,10 @@ struct Shape
 	virtual void SetOrientation(float aRadians) { aRadians; }
 	virtual void ComputeMass(float aDensity) { aDensity; }
 
-	Object* myObject = nullptr;
+	PhysicsObject* myObject = nullptr;
 };
 
-struct CircleShape : public Shape
+struct CircleShape : public PhysicsShape
 {
 	CircleShape(float aRadius)
 		: myRadius(aRadius)
@@ -32,7 +32,7 @@ struct CircleShape : public Shape
 
 	float myRadius;
 
-	bool RunCollision(const Shape& aShape, Manifold& aManifold) const;
+	bool RunCollision(const PhysicsShape& aShape, Manifold& aManifold) const;
 	bool TestCollision(const CircleShape& aCircleShape, Manifold& aManifold) const override;
 	bool TestCollision(const PolygonShape& aPolygonShape, Manifold& aManifold) const override;
 
@@ -41,11 +41,11 @@ struct CircleShape : public Shape
 	void ComputeMass(float aDensity) override;
 };
 
-struct PolygonShape : public Shape
+struct PolygonShape : public PhysicsShape
 {
 	PolygonShape() {}
 
-	bool RunCollision(const Shape& aShape, Manifold& aManifold) const;
+	bool RunCollision(const PhysicsShape& aShape, Manifold& aManifold) const;
 	bool TestCollision(const CircleShape& aCircleShape, Manifold& aManifold) const override;
 	bool TestCollision(const PolygonShape& aPolygonShape, Manifold& aManifold) const override;
 
@@ -68,6 +68,7 @@ struct PolygonShape : public Shape
 struct AABBShape : public PolygonShape
 {
 	AABBShape(const Vector2f& aSize);
+	AABBShape(const Vector2i& aSize);
 
 	void Render() const override;
 

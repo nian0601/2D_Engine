@@ -26,6 +26,9 @@ namespace FW_FileSystem
 		bool myAutoFreeContents;
 	};
 
+
+	void SetDataFolder(const char* aFolderName);
+
 	bool GetAllFilesFromDirectory(const char* aDirectory, FW_GrowingArray<FileInfo>& someOutFilePaths);
 	void GetFileName(const FW_String& aFilePath, FW_String& aNameOut);
 	void GetFileExtention(const FW_String& aFilePath, FW_String& aExtentionOut);

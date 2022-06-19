@@ -86,7 +86,7 @@ void PhysicsTestingTestbed::Run()
 		accumulator -= myPhysicsWorld.GetFixedDeltaTime();
 	}
 
-	for (const Object* object : myPhysicsWorld.GetObjects())
+	for (const PhysicsObject* object : myPhysicsWorld.GetObjects())
 		object->myShape->Render();
 
 	if (myRenderContacts)
@@ -182,14 +182,14 @@ void PhysicsTestingTestbed::GenerateScene(SceneType aSceneType)
 	const float thickness = 30.f;
 
 	Rectf rect = MakeRect(x1, y1, x2, y1 + thickness);
-	Object* topEdge = new Object(new AABBShape(rect.myExtents));
+	PhysicsObject* topEdge = new PhysicsObject(new AABBShape(rect.myExtents));
 	topEdge->SetPosition(rect.myCenterPos);
 	topEdge->SetStatic();
 	topEdge->myColor = 0xFF444444;
 	myPhysicsWorld.AddObject(topEdge);
 
 	rect = MakeRect(x1, y2 - thickness, x2, y2);
-	Object* bottomEdge = new Object(new AABBShape(rect.myExtents));
+	PhysicsObject* bottomEdge = new PhysicsObject(new AABBShape(rect.myExtents));
 	bottomEdge->SetPosition(rect.myCenterPos);
 	bottomEdge->SetStatic();
 	bottomEdge->myColor = 0xFF444444;
@@ -197,20 +197,20 @@ void PhysicsTestingTestbed::GenerateScene(SceneType aSceneType)
 	myPhysicsWorld.AddObject(bottomEdge);
 
 	rect = MakeRect(x1, y1, x1 + thickness, y2);
-	Object* leftEdge = new Object(new AABBShape(rect.myExtents));
+	PhysicsObject* leftEdge = new PhysicsObject(new AABBShape(rect.myExtents));
 	leftEdge->SetPosition(rect.myCenterPos);
 	leftEdge->SetStatic();
 	leftEdge->myColor = 0xFF444444;
 	myPhysicsWorld.AddObject(leftEdge);
 
 	rect = MakeRect(x2 - thickness, y1, x2, y2);
-	Object* rightEdge = new Object(new AABBShape(rect.myExtents));
+	PhysicsObject* rightEdge = new PhysicsObject(new AABBShape(rect.myExtents));
 	rightEdge->SetPosition(rect.myCenterPos);
 	rightEdge->SetStatic();
 	rightEdge->myColor = 0xFF444444;
 	myPhysicsWorld.AddObject(rightEdge);
 
-	myPlayerObject = new Object(new CircleShape(10.f));
+	myPlayerObject = new PhysicsObject(new CircleShape(10.f));
 	myPlayerObject->SetPosition({ 500.f, 300.f });
 	myPlayerObject->myRestitution = 0.2f;
 	myPhysicsWorld.AddObject(myPlayerObject);
@@ -222,7 +222,7 @@ void PhysicsTestingTestbed::GenerateRandomCirclesScene()
 	for (int i = 0; i < myNumberOfCircles; ++i)
 	{
 		float radius = static_cast<float>(FW_RandInt(myMinMaxRadius.x, myMinMaxRadius.y));
-		Object* circle = new Object(new CircleShape(radius));
+		PhysicsObject* circle = new PhysicsObject(new CircleShape(radius));
 
 		circle->myRestitution = FW_RandFloat(myMinMaxRestitution.x, myMinMaxRestitution.y);
 		circle->SetPosition({ FW_RandFloat(50.f, 600.f) , FW_RandFloat(50.f, 300.f) });
@@ -236,17 +236,17 @@ void PhysicsTestingTestbed::GenerateRandomCirclesScene()
 void PhysicsTestingTestbed::GenerateChainTestScene()
 {
 	float radius = 10.f;
-	Object* anchor = new Object(new CircleShape(radius));
+	PhysicsObject* anchor = new PhysicsObject(new CircleShape(radius));
 	anchor->SetMass(0);
 	anchor->SetPosition({ 200.f, 200.f });
 	anchor->myColor = 0xFF444444;
 	myPhysicsWorld.AddObject(anchor);
 
-	Object* prevLink = anchor;
+	PhysicsObject* prevLink = anchor;
 	int chainLenght = 5;
 	for (int i = 0; i < chainLenght; ++i)
 	{
-		Object* newLink = new Object(new CircleShape(radius));
+		PhysicsObject* newLink = new PhysicsObject(new CircleShape(radius));
 		newLink->SetMass(radius);
 		newLink->myRestitution = 0.7f;
 
@@ -262,7 +262,7 @@ void PhysicsTestingTestbed::GenerateChainTestScene()
 		prevLink = newLink;
 	}
 
-	Object* endAnchor = new Object(new CircleShape(radius));
+	PhysicsObject* endAnchor = new PhysicsObject(new CircleShape(radius));
 	endAnchor->SetMass(0);
 	endAnchor->myColor = 0xFF444444;
 	endAnchor->SetPosition(prevLink->myPosition + radius * 2);
@@ -293,7 +293,7 @@ void PhysicsTestingTestbed::GenerateBoxesAndCirclesScene()
 		position.y -= 10.f;
 		position.y -= extents.y * 0.5f;
 
-		Object* box = new Object(new AABBShape(extents));
+		PhysicsObject* box = new PhysicsObject(new AABBShape(extents));
 		box->myPosition = position;
 		box->myColor = FW_RandomColor();
 		box->SetMass(1.f);
@@ -314,7 +314,7 @@ void PhysicsTestingTestbed::GeneratePolygonScene()
 	position.x = 200.f;
 	position.y = 300.f;
 
-	Object* polygon = new Object(new AABBShape(extents));
+	PhysicsObject* polygon = new PhysicsObject(new AABBShape(extents));
 	polygon->SetPosition(position);
 	//polygon->SetOrientation(FW_DegreesToRadians(-40.f));
 	polygon->myColor = FW_RandomColor();
@@ -333,7 +333,7 @@ void PhysicsTestingTestbed::GeneratePolygonScene()
 	position.x = 200.f;
 	position.y = 200.f;
 
-	polygon = new Object(new AABBShape(extents));
+	polygon = new PhysicsObject(new AABBShape(extents));
 	polygon->SetPosition(position);
 	polygon->SetOrientation(FW_DegreesToRadians(-40.f));
 	polygon->myColor = FW_RandomColor();

@@ -20,7 +20,7 @@ bool ChainBuilder::Update(const Vector2f& aMousePosition)
 {
 	if (FW_Input::WasMouseReleased(FW_Input::RIGHTMB))
 	{
-		for (Object* object : myObjects)
+		for (PhysicsObject* object : myObjects)
 			myPhysicsWorld.AddObject(object);
 
 		for (MaxDistanceConstraint* constraint : myConstraints)
@@ -36,7 +36,7 @@ bool ChainBuilder::Update(const Vector2f& aMousePosition)
 	bool middleButton = FW_Input::WasMouseReleased(FW_Input::MIDDLEMB);
 	if (leftButton || middleButton)
 	{
-		Object* previousLink = nullptr;
+		PhysicsObject* previousLink = nullptr;
 		if (myObjects.Count() > 0)
 			previousLink = myObjects.GetLast();
 
@@ -44,7 +44,7 @@ bool ChainBuilder::Update(const Vector2f& aMousePosition)
 		bool placeAnchor = middleButton;
 		float radius = placeAnchor ? myAnchorSize : myLinkSize;
 
-		Object* newLink = new Object(new CircleShape(radius));
+		PhysicsObject* newLink = new PhysicsObject(new CircleShape(radius));
 		myObjects.Add(newLink);
 
 		Vector2f placementPosition = aMousePosition;
@@ -78,7 +78,7 @@ bool ChainBuilder::Update(const Vector2f& aMousePosition)
 		}
 	}
 
-	for (const Object* object : myObjects)
+	for (const PhysicsObject* object : myObjects)
 		object->myShape->Render();
 
 	return true;

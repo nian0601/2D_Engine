@@ -102,7 +102,7 @@ namespace Collision_Private
 	}
 }
 
-bool CircleShape::RunCollision(const Shape& aShape, Manifold& aManifold) const
+bool CircleShape::RunCollision(const PhysicsShape& aShape, Manifold& aManifold) const
 {
 	return aShape.TestCollision(*this, aManifold);
 }
@@ -268,7 +268,7 @@ bool BiasGreaterThan(float a, float b)
 	return a >= b * biasRelative + a * biasAbsolute;
 }
 
-bool PolygonShape::RunCollision(const Shape& aShape, Manifold& aManifold) const
+bool PolygonShape::RunCollision(const PhysicsShape& aShape, Manifold& aManifold) const
 {
 	return aShape.TestCollision(*this, aManifold);
 }
@@ -463,6 +463,11 @@ AABBShape::AABBShape(const Vector2f& aSize)
 	myNormals[3] = { -1.f,  0.f };
 
 	myRect = MakeRect({ 0.f, 0.f }, aSize);
+}
+
+AABBShape::AABBShape(const Vector2i& aSize)
+	: AABBShape(Vector2f(static_cast<float>(aSize.x), static_cast<float>(aSize.y)))
+{
 }
 
 void AABBShape::Render() const

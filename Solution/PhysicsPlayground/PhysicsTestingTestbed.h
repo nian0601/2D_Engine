@@ -29,7 +29,7 @@ private:
 	void GeneratePolygonScene();
 
 	PhysicsWorld myPhysicsWorld;
-	Object* myPlayerObject;
+	PhysicsObject* myPlayerObject;
 
 	ChainBuilder* myChainBuilder;
 

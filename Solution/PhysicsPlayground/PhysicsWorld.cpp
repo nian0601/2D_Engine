@@ -4,7 +4,7 @@
 #include <FW_Math.h>
 #include <FW_Renderer.h>
 
-Object::Object(Shape* aShape)
+PhysicsObject::PhysicsObject(PhysicsShape* aShape)
 {
 	myShape = aShape;
 	myShape->myObject = this;
@@ -12,12 +12,12 @@ Object::Object(Shape* aShape)
 	aShape->ComputeMass(1.f);
 }
 
-Object::~Object()
+PhysicsObject::~PhysicsObject()
 {
 	delete myShape;
 }
 
-void Object::IntegrateForces(float aDelta)
+void PhysicsObject::IntegrateForces(float aDelta)
 {
 	if (myInvMass == 0.f)
 		return;
@@ -27,7 +27,7 @@ void Object::IntegrateForces(float aDelta)
 	myAngularVelocity += myTorque * myInvInertia * aDelta;
 }
 
-void Object::IntegrateVelocity(float aDelta)
+void PhysicsObject::IntegrateVelocity(float aDelta)
 {
 	myPosition += myVelocity * aDelta;
 	myOrientation += myAngularVelocity * aDelta;
@@ -35,13 +35,13 @@ void Object::IntegrateVelocity(float aDelta)
 	IntegrateForces(aDelta);
 }
 
-void Object::ApplyImpulse(const Vector2f& aImpulse, const Vector2f& aContactVector)
+void PhysicsObject::ApplyImpulse(const Vector2f& aImpulse, const Vector2f& aContactVector)
 {
 	myVelocity += myInvMass * aImpulse;
 	myAngularVelocity += myInvInertia * Cross(aContactVector, aImpulse);
 }
 
-void Object::SetMass(float aMass)
+void PhysicsObject::SetMass(float aMass)
 {
 	myMass = aMass;
 
@@ -51,7 +51,7 @@ void Object::SetMass(float aMass)
 		myInvMass = 0.f;
 }
 
-void Object::SetInertia(float aIntertia)
+void PhysicsObject::SetInertia(float aIntertia)
 {
 	myInertia = aIntertia;
 	if (myInertia > 0.f)
@@ -60,7 +60,7 @@ void Object::SetInertia(float aIntertia)
 		myInvInertia = 0.f;
 }
 
-void Object::SetStatic()
+void PhysicsObject::SetStatic()
 {
 	myMass = 0.f;
 	myInvMass = 0.f;
@@ -68,13 +68,13 @@ void Object::SetStatic()
 	myInvInertia = 0.f;
 }
 
-void Object::SetPosition(const Vector2f& aPosition)
+void PhysicsObject::SetPosition(const Vector2f& aPosition)
 {
 	myPosition = aPosition;
 	myPreviousPosition = aPosition;
 }
 
-void Object::SetOrientation(float aRadians)
+void PhysicsObject::SetOrientation(float aRadians)
 {
 	myOrientation = aRadians;
 	myPreviousOrientation = myOrientation;
@@ -90,7 +90,7 @@ PhysicsWorld::PhysicsWorld()
 	: myFixedDeltaTime(1.f / 60.f)
 {
 	myCircleShape = new CircleShape(5.f);
-	myCircleObject = new Object(myCircleShape);
+	myCircleObject = new PhysicsObject(myCircleShape);
 }
 
 PhysicsWorld::~PhysicsWorld()
@@ -106,13 +106,13 @@ void PhysicsWorld::Tick()
 
 	for (int i = 0; i < myObjects.Count(); ++i)
 	{
-		Object* A = myObjects[i];
+		PhysicsObject* A = myObjects[i];
 		A->myPreviousPosition = A->myPosition;
 		A->myPreviousOrientation = A->myOrientation;
 
 		for (int j = i + 1; j < myObjects.Count(); ++j)
 		{
-			const Object* B = myObjects[j];
+			const PhysicsObject* B = myObjects[j];
 
 			if(A->myInvMass == 0.f && B->myInvMass == 0.f)
 				continue;
@@ -122,7 +122,7 @@ void PhysicsWorld::Tick()
 		}
 	}
 
-	for (Object* object : myObjects)
+	for (PhysicsObject* object : myObjects)
 		object->IntegrateForces(myFixedDeltaTime);
 
 	const int maxNumIterations = 10;
@@ -135,17 +135,52 @@ void PhysicsWorld::Tick()
 		//	constraint->ResolveConstraint();
 	}
 
-	for (Object* object : myObjects)
+	for (PhysicsObject* object : myObjects)
 		object->IntegrateVelocity(myFixedDeltaTime);
 
 	for (const Manifold& manifold : myContacts)
 		PositionalCorrection(manifold);
 
-	for (Object* object : myObjects)
+	for (PhysicsObject* object : myObjects)
 	{
 		object->myForces = { 0.f, 0.f };
 		object->myTorque = 0.f;
 	}
+}
+
+void PhysicsWorld::TickLimited(float aDeltaTime)
+{
+	static float accumulator = 0.f;
+
+	accumulator += aDeltaTime;
+	accumulator = FW_Clamp(accumulator, 0.f, 1.f);
+
+	//const bool myIsInSingleStepMode = false;
+	//const bool myShouldStepSingleFrame = false;
+
+	while (accumulator >= GetFixedDeltaTime())
+	{
+		//if (myIsInSingleStepMode)
+		//{
+		//	if (myShouldStepSingleFrame)
+		//	{
+		//		Tick();
+		//		myShouldStepSingleFrame = false;
+		//	}
+		//}
+		//else
+		{
+			Tick();
+		}
+
+		accumulator -= GetFixedDeltaTime();
+	}
+}
+
+void PhysicsWorld::RenderAllObjects()
+{
+	for (const PhysicsObject* object : GetObjects())
+		object->myShape->Render();
 }
 
 void PhysicsWorld::ApplyForceInRadius(const Vector2f& aCenter, float aRadius, float aMinForce, float aMaxForce)
@@ -154,7 +189,7 @@ void PhysicsWorld::ApplyForceInRadius(const Vector2f& aCenter, float aRadius, fl
 	myCircleShape->myRadius = aRadius;
 
 	Manifold manifold;
-	for (Object* object : myObjects)
+	for (PhysicsObject* object : myObjects)
 	{
 		if (object->myShape->RunCollision(*myCircleShape, manifold))
 		{
@@ -173,7 +208,7 @@ void PhysicsWorld::DeleteAllObjects()
 	myObjects.DeleteAll();
 }
 
-void PhysicsWorld::AddObject(Object* aObject)
+void PhysicsWorld::AddObject(PhysicsObject* aObject)
 {
 	myObjects.Add(aObject);
 }
@@ -183,10 +218,15 @@ void PhysicsWorld::AddConstraint(MaxDistanceConstraint* aConstraint)
 	myMaxDistanceConstraints.Add(aConstraint);
 }
 
+void PhysicsWorld::RemoveObject(PhysicsObject* aObject)
+{
+	myObjects.RemoveCyclic(aObject);
+}
+
 void PhysicsWorld::ResolveCollision(const Manifold& aManifold)
 {
-	Object& A = *aManifold.myObjectA;
-	Object& B = *aManifold.myObjectB;
+	PhysicsObject& A = *aManifold.myObjectA;
+	PhysicsObject& B = *aManifold.myObjectB;
 
 	if (A.myInvMass + B.myInvMass == 0.f)
 	{
@@ -248,8 +288,8 @@ void PhysicsWorld::ResolveCollision(const Manifold& aManifold)
 
 void PhysicsWorld::PositionalCorrection(const Manifold& aManifold)
 {
-	Object& A = *aManifold.myObjectA;
-	Object& B = *aManifold.myObjectB;
+	PhysicsObject& A = *aManifold.myObjectA;
+	PhysicsObject& B = *aManifold.myObjectB;
 
 	const float slop = 0.05f;
 	const float percent = 0.3f;
@@ -261,8 +301,8 @@ void PhysicsWorld::PositionalCorrection(const Manifold& aManifold)
 
 void MaxDistanceConstraint::ResolveConstraint()
 {
-	Object& A = *myObjectA;
-	Object& B = *myObjectB;
+	PhysicsObject& A = *myObjectA;
+	PhysicsObject& B = *myObjectB;
 
 	if (A.myInvMass + B.myInvMass == 0.f)
 	{

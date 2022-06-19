@@ -30,11 +30,18 @@ void FW_EntityManager::EndFrame()
 	FlushEntityRemovals();
 }
 
+FW_EntityID FW_EntityManager::CreateEmptyEntity()
+{
+	FW_EntityID newEntity = myNextEntity++;
+	myEntities.Add(newEntity);
+	return newEntity;
+}
+
 FW_EntityID FW_EntityManager::CreateEntity(const char* aEntityFilePath, const Vector2f& aPosition)
 {
 	FW_FileProcessor fileProcessor(aEntityFilePath, FW_FileProcessor::READ);
 
-	FW_EntityID newEntity = FW_EntityManager::CreateEntity();
+	FW_EntityID newEntity = CreateEmptyEntity();
 
 	FW_String componentIdentifierFromDisk;
 
@@ -106,13 +113,6 @@ void FW_EntityManager::BuildComponentUI(FW_EntityID anEntity)
 
 	for (FW_IComponentStorage* storage : myComponentStorages)
 		storage->BuildAddComponentUI(anEntity);
-}
-
-FW_EntityID FW_EntityManager::CreateEntity()
-{
-	FW_EntityID newEntity = myNextEntity++;
-	myEntities.Add(newEntity);
-	return newEntity;
 }
 
 void FW_EntityManager::RemoveEntity(FW_EntityID anEntityID)

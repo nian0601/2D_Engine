@@ -14,10 +14,10 @@
 // Goes over constraints in p3
 // https://www.toptal.com/game/video-game-physics-part-i-an-introduction-to-rigid-body-dynamics
 
-struct Object
+struct PhysicsObject
 {
-	Object(Shape* aShape);
-	~Object();
+	PhysicsObject(PhysicsShape* aShape);
+	~PhysicsObject();
 
 	Vector2f myPosition; // += myVelocity * deltaTime
 	Vector2f myVelocity; // += myAcceleration
@@ -41,7 +41,7 @@ struct Object
 
 	int myColor = 0xFFFFFFFF;
 
-	Shape* myShape = nullptr;
+	PhysicsShape* myShape = nullptr;
 
 	void IntegrateForces(float aDelta);
 	void IntegrateVelocity(float aDelta);
@@ -61,8 +61,8 @@ struct Object
 
 struct Manifold
 {
-	Object* myObjectA = nullptr;
-	Object* myObjectB = nullptr;
+	PhysicsObject* myObjectA = nullptr;
+	PhysicsObject* myObjectB = nullptr;
 	Vector2f myHitNormal;
 	Vector2f myContacts[2];
 	int myContactCount = 0;
@@ -71,8 +71,8 @@ struct Manifold
 
 struct MaxDistanceConstraint
 {
-	Object* myObjectA = nullptr;
-	Object* myObjectB = nullptr;
+	PhysicsObject* myObjectA = nullptr;
+	PhysicsObject* myObjectB = nullptr;
 	float myMaxDistance = 0.f;
 
 	void ResolveConstraint();
@@ -85,15 +85,20 @@ public:
 	~PhysicsWorld();
 
 	void Tick();
+	void TickLimited(float aDeltaTime);
+
+	void RenderAllObjects();
 
 	void ApplyForceInRadius(const Vector2f& aCenter, float aRadius, float aMinForce, float aMaxForce);
 
 	void DeleteAllObjects();
 
-	void AddObject(Object* aObject);
+	void AddObject(PhysicsObject* aObject);
 	void AddConstraint(MaxDistanceConstraint* aConstraint);
 
-	const FW_GrowingArray<Object*>& GetObjects() const { return myObjects; }
+	void RemoveObject(PhysicsObject* aObject);
+
+	const FW_GrowingArray<PhysicsObject*>& GetObjects() const { return myObjects; }
 	const FW_GrowingArray<Manifold>& GetContacts() const { return myContacts; }
 	float GetFixedDeltaTime() const { return myFixedDeltaTime; }
 
@@ -106,9 +111,9 @@ private:
 
 	float myFixedDeltaTime;
 	FW_GrowingArray<Manifold> myContacts;
-	FW_GrowingArray<Object*> myObjects;
+	FW_GrowingArray<PhysicsObject*> myObjects;
 	FW_GrowingArray<MaxDistanceConstraint*> myMaxDistanceConstraints;
 
-	Object* myCircleObject;
+	PhysicsObject* myCircleObject;
 	CircleShape* myCircleShape;
 };

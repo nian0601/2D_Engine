@@ -13,6 +13,7 @@ public:
 	~FW_EntityManager();
 	void EndFrame();
 
+	FW_EntityID CreateEmptyEntity();
 	FW_EntityID CreateEntity(const char* aEntityFilePath, const Vector2f& aPosition);
 	void SaveEntity(FW_EntityID anEntity, const char* aEntityFilePath);
 
@@ -44,7 +45,6 @@ public:
 	FW_MessageQueue& GetMessageQueue() const { return *myMessageQueue; }
 
 protected:
-	FW_EntityID CreateEntity();
 	
 	void RemoveEntity(FW_EntityID anEntityID);
 	void RemoveAllEntities();

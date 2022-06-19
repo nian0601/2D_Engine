@@ -56,6 +56,7 @@ struct RenderComponent
 	Recti myTextureRect;
 	Vector2i mySpriteSize;
 	FW_Renderer::Texture myTexture;
+	FW_String myTextureFileName;
 };
 
 template <>
@@ -76,6 +77,13 @@ inline void BuildSpecificComponentUI(RenderComponent& aComponent)
 			aComponent.myTextureRect.myTopLeft.y,
 			aComponent.myTextureRect.myBottomRight.x,
 			aComponent.myTextureRect.myBottomRight.y);
+	}
+
+	if (ImGui::InputText("Filename", aComponent.myTextureFileName.GetRawBuffer(), FW_STRING_START_SIZE, ImGuiInputTextFlags_EnterReturnsTrue))
+	{
+		aComponent.myTexture = FW_Renderer::GetTexture(aComponent.myTextureFileName.GetBuffer());
+		aComponent.mySpriteSize = aComponent.myTexture.mySize;
+		aComponent.myTextureRect = MakeRect<int>(0, 0, aComponent.mySpriteSize.x, aComponent.mySpriteSize.y);
 	}
 }
 
