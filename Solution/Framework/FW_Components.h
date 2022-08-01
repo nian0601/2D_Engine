@@ -25,6 +25,7 @@ struct TranslationComponent
 	DEFINE_COMPONENT(TranslationComponent);
 
 	Vector2f myPosition;
+	float myOrientation = 0.f;
 
 	// Worth its own component?
 	Vector2f mySpawnPosition;

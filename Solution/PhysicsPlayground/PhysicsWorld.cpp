@@ -60,12 +60,22 @@ void PhysicsObject::SetInertia(float aIntertia)
 		myInvInertia = 0.f;
 }
 
-void PhysicsObject::SetStatic()
+void PhysicsObject::SetDensity(float aDensity)
+{
+	myShape->ComputeMass(aDensity);
+}
+
+void PhysicsObject::MakeStatic()
 {
 	myMass = 0.f;
 	myInvMass = 0.f;
 	myInertia = 0.f;
 	myInvInertia = 0.f;
+}
+
+void PhysicsObject::MakeSensor()
+{
+	mySensorFlag = true;
 }
 
 void PhysicsObject::SetPosition(const Vector2f& aPosition)
@@ -77,8 +87,14 @@ void PhysicsObject::SetPosition(const Vector2f& aPosition)
 void PhysicsObject::SetOrientation(float aRadians)
 {
 	myOrientation = aRadians;
+
+	if (myOrientation > FW_PI * 2.f)
+		myOrientation = 0.f;
+	if (myOrientation < -FW_PI * 2.f)
+		myOrientation = 0.f;
+
 	myPreviousOrientation = myOrientation;
-	myShape->SetOrientation(aRadians);
+	myShape->SetOrientation(myOrientation);
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -108,6 +124,7 @@ void PhysicsWorld::Tick()
 	{
 		PhysicsObject* A = myObjects[i];
 		A->myPreviousPosition = A->myPosition;
+		A->myPreviousVelocity = A->myVelocity;
 		A->myPreviousOrientation = A->myOrientation;
 
 		for (int j = i + 1; j < myObjects.Count(); ++j)
@@ -183,6 +200,18 @@ void PhysicsWorld::RenderAllObjects()
 		object->myShape->Render();
 }
 
+void PhysicsWorld::RenderContacts()
+{
+	for (const Manifold& contact : myContacts)
+	{
+		for (int i = 0; i < contact.myContactCount; ++i)
+		{
+			FW_Renderer::RenderLine(contact.myContacts[i], contact.myContacts[i] + contact.myHitNormal * contact.myPenetrationDepth, 0xFFFF0000);
+			FW_Renderer::RenderCircle(contact.myContacts[i], 3.f);
+		}
+	}
+}
+
 void PhysicsWorld::ApplyForceInRadius(const Vector2f& aCenter, float aRadius, float aMinForce, float aMaxForce)
 {
 	myCircleObject->myPosition = aCenter;
@@ -234,6 +263,9 @@ void PhysicsWorld::ResolveCollision(const Manifold& aManifold)
 		B.myVelocity = { 0.f, 0.f };
 		return;
 	}
+
+	if (A.mySensorFlag || B.mySensorFlag)
+		return;
 
 	float e = FW_Min(A.myRestitution, B.myRestitution);
 	float sf = A.myStaticFriction * A.myStaticFriction;
@@ -290,6 +322,9 @@ void PhysicsWorld::PositionalCorrection(const Manifold& aManifold)
 {
 	PhysicsObject& A = *aManifold.myObjectA;
 	PhysicsObject& B = *aManifold.myObjectB;
+
+	if (A.mySensorFlag || B.mySensorFlag)
+		return;
 
 	const float slop = 0.05f;
 	const float percent = 0.3f;

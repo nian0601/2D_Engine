@@ -5,6 +5,7 @@
 #include <FW_Matrix22.h>
 
 #include "PhysicsShapes.h"
+#include <FW_Includes.h>
 
 // https://gamedevelopment.tutsplus.com/tutorials/how-to-create-a-custom-2d-physics-engine-the-basics-and-impulse-resolution--gamedev-6331
 // https://gamedevelopment.tutsplus.com/tutorials/how-to-create-a-custom-2d-physics-engine-the-core-engine--gamedev-7493
@@ -50,13 +51,22 @@ struct PhysicsObject
 
 	void SetMass(float aMass);
 	void SetInertia(float aIntertia);
-	void SetStatic();
+	void SetDensity(float aDensity);
+
+	void MakeStatic();
+	void MakeSensor();
 
 	void SetPosition(const Vector2f& aPosition);
 	void SetOrientation(float aRadians);
 
 	Vector2f myPreviousPosition;
+	Vector2f myPreviousVelocity;
 	float myPreviousOrientation = 0.f;
+	bool mySensorFlag = false;
+
+
+	// Replace with some more generic UserData?
+	FW_EntityID myEntityID = InvalidEntity;
 };
 
 struct Manifold
@@ -88,6 +98,7 @@ public:
 	void TickLimited(float aDeltaTime);
 
 	void RenderAllObjects();
+	void RenderContacts();
 
 	void ApplyForceInRadius(const Vector2f& aCenter, float aRadius, float aMinForce, float aMaxForce);
 

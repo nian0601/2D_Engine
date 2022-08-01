@@ -206,24 +206,26 @@ namespace FW_Renderer
 		SFML_Renderer::ourOffscreenBuffer->draw(circle);
 	}
 
-	void RenderTexture(const Texture& aTexture, const Vector2i& aPos)
+	void RenderTexture(const Texture& aTexture, const Vector2i& aPos, float aRotationInRadians /*= 0.f*/)
 	{
 		if (const sf::Texture* texture = SFML_Renderer::GetSFMLTexture(aTexture.myTextureID))
 		{
 			sf::Sprite sprite;
 			sprite.setTexture(*texture);
 			sprite.setPosition({ float(aPos.x), float(aPos.y) });
+			sprite.setRotation(FW_RadiansToDegrees(aRotationInRadians));
 			SFML_Renderer::ourOffscreenBuffer->draw(sprite);
 		}
 	}
 
-	void RenderTexture(const Texture& aTexture, const Vector2i& aPos, const Recti& aTextureRect)
+	void RenderTexture(const Texture& aTexture, const Vector2i& aPos, const Recti& aTextureRect, float aRotationInRadians /*= 0.f*/)
 	{
 		if (const sf::Texture* texture = SFML_Renderer::GetSFMLTexture(aTexture.myTextureID))
 		{
 			sf::Sprite sprite;
 			sprite.setTexture(*texture);
 			sprite.setPosition({ float(aPos.x), float(aPos.y) });
+			sprite.setRotation(FW_RadiansToDegrees(aRotationInRadians));
 
 			sf::IntRect textRect;
 			textRect.left = aTextureRect.myTopLeft.x;
@@ -236,13 +238,13 @@ namespace FW_Renderer
 		}
 	}
 
-	void RenderTexture(int aTextureID, const Vector2i& aPos, const Vector2i& aSize, const Recti& aTextureRect)
+	void RenderTexture(int aTextureID, const Vector2i& aPos, const Vector2i& aSize, const Recti& aTextureRect, float aRotationInRadians /*= 0.f*/)
 	{
 		Recti spriteRect = MakeRect(aPos, aSize);
-		RenderTexture(aTextureID, spriteRect, aTextureRect);
+		RenderTexture(aTextureID, spriteRect, aTextureRect, aRotationInRadians);
 	}
 
-	void RenderTexture(int aTextureID, const Recti& aSpriteRect, const Recti& aTextureRect)
+	void RenderTexture(int aTextureID, const Recti& aSpriteRect, const Recti& aTextureRect, float aRotationInRadians /*= 0.f*/)
 	{
 		if (const sf::Texture* texture = SFML_Renderer::GetSFMLTexture(aTextureID))
 		{
@@ -250,6 +252,7 @@ namespace FW_Renderer
 			rect.setFillColor(SFML_Renderer::GetSFMLColor(0xFFFFFFFF));
 			rect.setOrigin({ aSpriteRect.myExtents.x * 0.5f, aSpriteRect.myExtents.y * 0.5f });
 			rect.setPosition({ float(aSpriteRect.myCenterPos.x), float(aSpriteRect.myCenterPos.y) });
+			rect.setRotation(FW_RadiansToDegrees(aRotationInRadians));
 
 			if (aSpriteRect.myExtents.x != SFML_Renderer::ourCurrentRectangleSize.x || aSpriteRect.myExtents.y != SFML_Renderer::ourCurrentRectangleSize.y)
 			{

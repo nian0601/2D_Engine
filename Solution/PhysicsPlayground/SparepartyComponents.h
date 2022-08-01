@@ -31,3 +31,17 @@ struct PlayerComponent
 {
 	DEFINE_COMPONENT(PlayerComponent);
 };
+
+struct GoalComponent
+{
+	DEFINE_COMPONENT(GoalComponent);
+};
+
+
+//////////////////////////////////////////////////////////////////////////
+
+struct CollisionMessage
+{
+	FW_EntityID myFirstEntity;
+	FW_EntityID mySecondEntity;
+};

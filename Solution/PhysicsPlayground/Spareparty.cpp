@@ -18,48 +18,21 @@ Spareparty::Spareparty()
 {
 	myEntityManager.RegisterComponent<PhysicsComponent>();
 	myEntityManager.RegisterComponent<PlayerComponent>();
+	myEntityManager.RegisterComponent<GoalComponent>();
 
 	FW_MessageQueue& messageQueue = myEntityManager.GetMessageQueue();
+	messageQueue.RegisterMessageType<CollisionMessage>();
+
 	messageQueue.SubscribeToMessage<FW_PreEntityRemovedMessage>(std::bind(&Spareparty::OnPreEntityRemoved, this, std::placeholders::_1));
+	messageQueue.SubscribeToMessage<CollisionMessage>(std::bind(&Spareparty::OnCollision, this, std::placeholders::_1));
 
-	int map[10][10] =
-	{
-		{ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-		{ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-		{ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-		{ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-		{ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-		{ 0, 0, 0, 0, 0, 0, 0, 2, 0, 0},
-		{ 0, 0, 0, 0,15,16, 0, 0, 0, 0},
-		{ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-		{ 0, 7, 0, 9, 5,10, 4, 5, 5, 6},
-		{ 3, 3, 3, 3, 3, 3, 3, 3, 3, 3}
-	};
 
-	Vector2f position = { 50.f, 50.f };
-	for (int y = 0; y < 10; ++y)
-	{
-		for (int x = 0; x < 10; ++x)
-		{
-			if (map[y][x] != 0)
-			{
-				CreateTile(position, map[y][x]);
-			}
-
-			position.x += 64.f;
-		}
-
-		position.x = 50.f;
-		//position.y += 64.f;
-		position.y += 64.f;
-	}
-
-	CreatePlayer({ 400.f, 280.f });
+	myCurrentLevelID = 0;
+	LoadLevel(myCurrentLevelID);
 }
 
 Spareparty::~Spareparty()
 {
-
 }
 
 void Spareparty::Run()
@@ -69,8 +42,11 @@ void Spareparty::Run()
 	PhysicSystem::Run(myEntityManager, myPhysicsWorld);
 	FW_RenderSystem::Run(myEntityManager);
 
-	if(myRenderPhysicsObjects)
+	if (myRenderPhysicsObjects)
+	{
 		myPhysicsWorld.RenderAllObjects();
+		myPhysicsWorld.RenderContacts();
+	}
 
 	if (FW_Editor::BeginEditor(myEntityManager))
 	{
@@ -137,7 +113,74 @@ void Spareparty::Run()
 	myEntityManager.EndFrame();
 }
 
-void Spareparty::CreateTile(const Vector2f& aPosition, int aTileID)
+void Spareparty::LoadLevel(int aLevelID)
+{
+	myEntityManager.QueueRemovalAllEntities();
+
+	if (aLevelID == 0)
+	{
+		int map[10][10] =
+		{
+			{ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+			{ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+			{ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+			{ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+			{ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+			{ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+			{ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+			{ 0,89, 0, 0, 0, 0, 0, 0,99, 0},
+			{ 0, 7, 0, 0, 0, 0, 4, 5, 5, 6},
+			{ 5, 3, 5, 5, 5, 5, 3, 3, 3, 3}
+		};
+		LoadLevel(map);
+	}
+	else if (aLevelID == 1)
+	{
+		int map[10][10] =
+		{
+			{ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+			{ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+			{ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+			{ 0,99, 0, 0, 0, 0, 0, 0, 0, 0},
+			{ 4, 5, 6, 0, 0, 0, 0, 0, 0, 0},
+			{ 3, 3, 3, 0, 0, 0, 0, 0, 0, 0},
+			{ 3, 3, 3, 0, 0, 0, 0, 0, 0, 0},
+			{ 3, 3, 3, 0, 0, 0, 0, 0, 0, 0},
+			{ 3, 3, 3, 0, 0, 0, 0,89, 0, 0},
+			{ 3, 3, 3, 5, 5, 5, 5, 5, 5, 5}
+		};
+		LoadLevel(map);
+	}
+}
+
+void Spareparty::LoadLevel(int aMapData[10][10])
+{
+	Vector2f position = { 50.f, 50.f };
+	for (int y = 0; y < 10; ++y)
+	{
+		for (int x = 0; x < 10; ++x)
+		{
+			int tileID = aMapData[y][x];
+			if (tileID != 0)
+			{
+				if (tileID == 99)
+					CreateGoal(position);
+				else if (tileID == 89)
+					CreatePlayer(position);
+				else
+					CreateTile(position, tileID);
+			}
+
+			position.x += 64.f;
+		}
+
+		position.x = 50.f;
+		//position.y += 64.f;
+		position.y += 64.f;
+	}
+}
+
+FW_EntityID Spareparty::CreateTile(const Vector2f& aPosition, int aTileID)
 {
 	FW_String textureFilePath = "tiles/tile";
 	if (aTileID < 10)
@@ -146,10 +189,10 @@ void Spareparty::CreateTile(const Vector2f& aPosition, int aTileID)
 	textureFilePath += ".png";
 
 	FW_Renderer::Texture texture = FW_Renderer::GetTexture(textureFilePath.GetBuffer());
-	CreateTile(aPosition, texture, textureFilePath.GetBuffer());
+	return CreateTile(aPosition, texture, textureFilePath.GetBuffer());
 }
 
-void Spareparty::CreateTile(const Vector2f& aPosition, FW_Renderer::Texture aTileTexture, const char* aTextureFileName /*= ""*/)
+FW_EntityID Spareparty::CreateTile(const Vector2f& aPosition, FW_Renderer::Texture aTileTexture, const char* aTextureFileName /*= ""*/)
 {
 	FW_EntityID tile = myEntityManager.CreateEmptyEntity();
 	RenderComponent& render = myEntityManager.AddComponent<RenderComponent>(tile);
@@ -165,12 +208,46 @@ void Spareparty::CreateTile(const Vector2f& aPosition, FW_Renderer::Texture aTil
 	physics.myObject = new PhysicsObject(new AABBShape(Vector2f(64.f, 64.f)));
 	physics.myObject->SetPosition(aPosition);
 	physics.myObject->myColor = 0x33AAAAAA;
-	physics.myObject->SetStatic();
+	physics.myObject->MakeStatic();
+	physics.myObject->myEntityID = tile;
 
 	myPhysicsWorld.AddObject(physics.myObject);
+
+	return tile;
 }
 
-void Spareparty::CreatePlayer(const Vector2f& aPosition)
+FW_EntityID Spareparty::CreateGoal(const Vector2f& aPosition)
+{
+	FW_String textureFilePath = "flagGreen_up.png";
+
+	FW_Renderer::Texture texture = FW_Renderer::GetTexture(textureFilePath.GetBuffer());
+
+	FW_EntityID goal = myEntityManager.CreateEmptyEntity();
+	RenderComponent& render = myEntityManager.AddComponent<RenderComponent>(goal);
+	render.myTextureFileName = textureFilePath.GetBuffer();
+	render.myTexture = FW_Renderer::GetTexture(textureFilePath.GetBuffer());
+	render.mySpriteSize = render.myTexture.mySize;
+	render.myTextureRect = MakeRect<int>(0, 0, render.myTexture.mySize.x, render.myTexture.mySize.y);
+
+	TranslationComponent& translation = myEntityManager.AddComponent<TranslationComponent>(goal);
+	translation.myPosition = aPosition;
+
+	PhysicsComponent& physics = myEntityManager.AddComponent<PhysicsComponent>(goal);
+	physics.myObject = new PhysicsObject(new AABBShape(Vector2f(64.f, 64.f)));
+	physics.myObject->SetPosition(aPosition);
+	physics.myObject->myColor = 0x33AAAAAA;
+	physics.myObject->MakeStatic();
+	physics.myObject->MakeSensor();
+	physics.myObject->myEntityID = goal;
+
+	myPhysicsWorld.AddObject(physics.myObject);
+
+	myEntityManager.AddComponent<GoalComponent>(goal);
+
+	return goal;
+}
+
+FW_EntityID Spareparty::CreatePlayer(const Vector2f& aPosition)
 {
 	FW_EntityID player = myEntityManager.CreateEmptyEntity();
 	RenderComponent& render = myEntityManager.AddComponent<RenderComponent>(player);
@@ -183,14 +260,19 @@ void Spareparty::CreatePlayer(const Vector2f& aPosition)
 	translation.myPosition = aPosition;
 
 	PhysicsComponent& physics = myEntityManager.AddComponent<PhysicsComponent>(player);
-	physics.myObject = new PhysicsObject(new AABBShape(render.mySpriteSize));
+	physics.myObject = new PhysicsObject(new CircleShape(render.mySpriteSize.x * 0.5f));
 	physics.myObject->SetPosition(aPosition);
 	physics.myObject->myColor = 0x33AAAAAA;
+	physics.myObject->myRestitution = 0.f;
+	physics.myObject->SetDensity(25.f);
 	physics.myObject->SetInertia(0.f);
+	physics.myObject->myEntityID = player;
 
 	myEntityManager.AddComponent<PlayerComponent>(player);
 
 	myPhysicsWorld.AddObject(physics.myObject);
+
+	return player;
 }
 
 FW_EntityID Spareparty::GetEntityUnderMouse()
@@ -229,9 +311,44 @@ void Spareparty::OnPreEntityRemoved(const FW_PreEntityRemovedMessage& aMessage)
 {
 	if (PhysicsComponent* physics = myEntityManager.FindComponent<PhysicsComponent>(aMessage.myEntity))
 	{
-		// Should the physworld own the objects?
-		// Probably not else it will be hard (impossible?) to support temporarily removing an object?
 		myPhysicsWorld.RemoveObject(physics->myObject);
-		delete physics->myObject; 
+		delete physics->myObject;
+		physics->myObject = nullptr;
+	}
+}
+
+void Spareparty::OnCollision(const CollisionMessage& aMessage)
+{
+	if (PlayerComponent* player = myEntityManager.FindComponent<PlayerComponent>(aMessage.myFirstEntity))
+	{
+		if (GoalComponent* goal = myEntityManager.FindComponent<GoalComponent>(aMessage.mySecondEntity))
+		{
+			myEntityManager.QueueRemovalAllEntities();
+			myEntityManager.FlushEntityRemovals();
+
+			if (myCurrentLevelID == 0)
+				myCurrentLevelID = 1;
+			else
+				myCurrentLevelID = 0;
+
+			LoadLevel(myCurrentLevelID);
+		}
+		else
+		{
+			if (PhysicsComponent* physics = myEntityManager.FindComponent<PhysicsComponent>(aMessage.myFirstEntity))
+			{
+				bool isUpright = fabs(physics->myObject->myOrientation) < 0.2f;
+				float speedLimit = isUpright ? 150.f : 10.f;
+
+				float speed = Length(physics->myObject->myPreviousVelocity);
+				if (speed > speedLimit)
+				{
+					myEntityManager.QueueRemovalAllEntities();
+					myEntityManager.FlushEntityRemovals();
+
+					LoadLevel(myCurrentLevelID);
+				}
+			}
+		}
 	}
 }

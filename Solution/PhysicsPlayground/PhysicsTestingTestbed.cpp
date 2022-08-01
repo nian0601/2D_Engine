@@ -184,14 +184,14 @@ void PhysicsTestingTestbed::GenerateScene(SceneType aSceneType)
 	Rectf rect = MakeRect(x1, y1, x2, y1 + thickness);
 	PhysicsObject* topEdge = new PhysicsObject(new AABBShape(rect.myExtents));
 	topEdge->SetPosition(rect.myCenterPos);
-	topEdge->SetStatic();
+	topEdge->MakeStatic();
 	topEdge->myColor = 0xFF444444;
 	myPhysicsWorld.AddObject(topEdge);
 
 	rect = MakeRect(x1, y2 - thickness, x2, y2);
 	PhysicsObject* bottomEdge = new PhysicsObject(new AABBShape(rect.myExtents));
 	bottomEdge->SetPosition(rect.myCenterPos);
-	bottomEdge->SetStatic();
+	bottomEdge->MakeStatic();
 	bottomEdge->myColor = 0xFF444444;
 	bottomEdge->myRestitution = 0.1f;
 	myPhysicsWorld.AddObject(bottomEdge);
@@ -199,14 +199,14 @@ void PhysicsTestingTestbed::GenerateScene(SceneType aSceneType)
 	rect = MakeRect(x1, y1, x1 + thickness, y2);
 	PhysicsObject* leftEdge = new PhysicsObject(new AABBShape(rect.myExtents));
 	leftEdge->SetPosition(rect.myCenterPos);
-	leftEdge->SetStatic();
+	leftEdge->MakeStatic();
 	leftEdge->myColor = 0xFF444444;
 	myPhysicsWorld.AddObject(leftEdge);
 
 	rect = MakeRect(x2 - thickness, y1, x2, y2);
 	PhysicsObject* rightEdge = new PhysicsObject(new AABBShape(rect.myExtents));
 	rightEdge->SetPosition(rect.myCenterPos);
-	rightEdge->SetStatic();
+	rightEdge->MakeStatic();
 	rightEdge->myColor = 0xFF444444;
 	myPhysicsWorld.AddObject(rightEdge);
 
@@ -321,7 +321,7 @@ void PhysicsTestingTestbed::GeneratePolygonScene()
 	polygon->myRestitution = 0.2f;
 	polygon->myDynamicFriction = 0.2f;
 	polygon->myStaticFriction = 0.4f;
-	polygon->SetStatic();
+	polygon->MakeStatic();
 	//polygon->SetInertia(0.f);
 
 
@@ -340,7 +340,7 @@ void PhysicsTestingTestbed::GeneratePolygonScene()
 	polygon->myRestitution = 0.2f;
 	polygon->myDynamicFriction = 0.2f;
 	polygon->myStaticFriction = 0.4f;
-	polygon->SetStatic();
+	polygon->MakeStatic();
 	//polygon->SetInertia(0.f);
 
 	myPhysicsWorld.AddObject(polygon);

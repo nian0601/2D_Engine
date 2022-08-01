@@ -22,10 +22,10 @@ namespace FW_Renderer
 	void RenderLine(const Vector2f& aStart, const Vector2f& aEnd, int aColor = 0xFFFFFFFF);
 	void RenderRect(const Rectf& aRect, int aColor = 0xFFFFFFFF, float aRotationInRadians = 0.f);
 	void RenderCircle(const Vector2f& aCenter, float aRadius, int aColor = 0xFFFFFFFF);
-	void RenderTexture(const Texture& aTexture, const Vector2i& aPos);
-	void RenderTexture(const Texture& aTexture, const Vector2i& aPos, const Recti& aTextureRect);
-	void RenderTexture(int aTextureID, const Vector2i& aPos, const Vector2i& aSize, const Recti& aTextureRect);
-	void RenderTexture(int aTextureID, const Recti& aSpriteRect, const Recti& aTextureRect);
+	void RenderTexture(const Texture& aTexture, const Vector2i& aPos, float aRotationInRadians = 0.f);
+	void RenderTexture(const Texture& aTexture, const Vector2i& aPos, const Recti& aTextureRect, float aRotationInRadians = 0.f);
+	void RenderTexture(int aTextureID, const Vector2i& aPos, const Vector2i& aSize, const Recti& aTextureRect, float aRotationInRadians = 0.f);
+	void RenderTexture(int aTextureID, const Recti& aSpriteRect, const Recti& aTextureRect, float aRotationInRadians = 0.f);
 
 	enum class TextAlignment
 	{
