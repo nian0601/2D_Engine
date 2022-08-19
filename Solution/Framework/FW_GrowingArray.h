@@ -41,10 +41,12 @@ public:
 	inline void DeleteCyclic(ObjectType& aObject);
 	inline void DeleteCyclicAtIndex(int aItemNumber);
 	inline void DeleteNonCyclicAtIndex(int aItemNumber);
+	inline void DeleteLast();
 	inline void RemoveCyclic(const ObjectType& aObject);
 	inline void RemoveCyclicAtIndex(int aItemNumber);
 	inline void RemoveNonCyclic(const ObjectType& aObject);
 	inline void RemoveNonCyclicAtIndex(int aItemNumber);
+	inline void RemoveLast();
 
 	inline int Find(const ObjectType& aObject) const;
 
@@ -271,6 +273,18 @@ inline void FW_GrowingArray<ObjectType>::DeleteNonCyclicAtIndex(int aItemNumber)
 	--myCurrentSize;
 }
 
+template<typename ObjectType>
+inline void FW_GrowingArray<ObjectType>::DeleteLast()
+{
+#ifdef CE_ARRAY_BOUNDS_CHECK
+	CE_ASSERT(myCurrentSize >= 0, locGrowingArray_ErrorStrings[LOW_INDEX]);
+#endif
+
+	// 'myCurrentSize' is one past the last index, so if we reduce the size first, then we can just use the new 'myCurrentSize' to delete the last entry
+	--myCurrentSize;
+	delete myData[myCurrentSize];
+	myData[myCurrentSize] = nullptr;
+}
 
 template<typename ObjectType>
 inline void FW_GrowingArray<ObjectType>::RemoveCyclic(const ObjectType& aObject)
@@ -321,6 +335,16 @@ inline void FW_GrowingArray<ObjectType>::RemoveNonCyclicAtIndex(int aItemNumber)
 	{
 		myData[i] = myData[i + 1];
 	}
+	--myCurrentSize;
+}
+
+template<typename ObjectType>
+inline void FW_GrowingArray<ObjectType>::RemoveLast()
+{
+#ifdef CE_ARRAY_BOUNDS_CHECK
+	CE_ASSERT(myCurrentSize >= 0, locGrowingArray_ErrorStrings[LOW_INDEX]);
+#endif
+
 	--myCurrentSize;
 }
 

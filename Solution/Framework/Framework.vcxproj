@@ -156,6 +156,7 @@
     <ClInclude Include="FW_Messages.h" />
     <ClInclude Include="FW_Murmur.h" />
     <ClInclude Include="FW_RenderSystem.h" />
+    <ClInclude Include="FW_StateStack.h" />
     <ClInclude Include="FW_String.h" />
     <ClInclude Include="FW_IGame.h" />
     <ClInclude Include="FW_Threading.h" />
@@ -190,6 +191,7 @@
     <ClCompile Include="FW_Logger.cpp" />
     <ClCompile Include="FW_Murmur.cpp" />
     <ClCompile Include="FW_RenderSystem.cpp" />
+    <ClCompile Include="FW_StateStack.cpp" />
     <ClCompile Include="imgui\imgui-SFML.cpp" />
     <ClCompile Include="imgui\imgui.cpp" />
     <ClCompile Include="imgui\imgui_demo.cpp" />

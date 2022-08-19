@@ -13,6 +13,7 @@
     </ClInclude>
     <ClInclude Include="PhysicsSystem.h" />
     <ClInclude Include="SparepartyComponents.h" />
+    <ClInclude Include="LevelState.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="PhysicsPlayground.cpp" />
@@ -26,6 +27,7 @@
       <Filter>Testbed</Filter>
     </ClCompile>
     <ClCompile Include="PhysicsSystem.cpp" />
+    <ClCompile Include="LevelState.cpp" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Testbed">

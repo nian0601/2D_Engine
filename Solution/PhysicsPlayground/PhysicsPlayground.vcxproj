@@ -125,6 +125,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="ChainBuilder.h" />
+    <ClInclude Include="LevelState.h" />
     <ClInclude Include="PhysicsPlayground.h" />
     <ClInclude Include="PhysicsShapes.h" />
     <ClInclude Include="PhysicsSystem.h" />
@@ -135,6 +136,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="ChainBuilder.cpp" />
+    <ClCompile Include="LevelState.cpp" />
     <ClCompile Include="PhysicsPlayground.cpp" />
     <ClCompile Include="PhysicsShapes.cpp" />
     <ClCompile Include="PhysicsSystem.cpp" />
