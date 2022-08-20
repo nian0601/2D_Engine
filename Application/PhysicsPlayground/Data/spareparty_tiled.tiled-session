@@ -1,0 +1,42 @@
+{
+    "Map/SizeTest": {
+        "height": 4300,
+        "width": 2
+    },
+    "activeFile": "level_one.tmx",
+    "expandedProjectPaths": [
+        ".",
+        "BlueTiles"
+    ],
+    "fileStates": {
+        "BlueTiles/blue_tiles.tsx": {
+            "dynamicWrapping": true,
+            "scaleInDock": 1,
+            "scaleInEditor": 0.25
+        },
+        "level_one.tmx": {
+            "scale": 0.5,
+            "selectedLayer": 0,
+            "viewCenter": {
+                "x": 897,
+                "y": 739
+            }
+        }
+    },
+    "last.imagePath": "C:/_GIT/2D_Engine/Application/PhysicsPlayground/Data/BlueTiles",
+    "map.fixedSize": false,
+    "map.lastUsedFormat": "tmx",
+    "map.tileHeight": 64,
+    "map.tileWidth": 64,
+    "openFiles": [
+        "level_one.tmx",
+        "BlueTiles/blue_tiles.tsx"
+    ],
+    "project": "spareparty_tiled.tiled-project",
+    "recentFiles": [
+        "BlueTiles/blue_tiles.tsx",
+        "level_one.tmx"
+    ],
+    "tileset.lastUsedFormat": "tsx",
+    "tileset.type": 1
+}
