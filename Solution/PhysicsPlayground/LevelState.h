@@ -20,6 +20,9 @@ private:
 	void OnPreEntityRemoved(const FW_PreEntityRemovedMessage& aMessage);
 	void OnCollision(const CollisionMessage& aMessage);
 
+	void LoadTileSheet(const char* aFilePath);
+	void LoadTiledLevel(const char* aFilePath);
+
 	void LoadLevel(int aLevelID);
 	void LoadLevel(int aMapData[10][10]);
 
@@ -32,4 +35,18 @@ private:
 	PhysicsWorld& myPhysicsWorld;
 
 	int myCurrentLevelID;
+
+	struct Tilesheet
+	{
+		struct TileData
+		{
+			int myID; // When I have moved over the Hashmap-implementation then this could be used as a key to that for easier lookups
+			int myWidth;
+			int myHeight;
+			FW_String myTexturePath;
+		};
+
+		FW_GrowingArray<TileData> myTiles;
+	};
+	Tilesheet myTileSheet;
 };

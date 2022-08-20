@@ -2,6 +2,7 @@
 
 #include <FW_EntityManager.h>
 #include <FW_MessageQueue.h>
+#include <FW_XMLParser.h>
 
 #include "PhysicsWorld.h"
 
@@ -14,7 +15,10 @@ LevelState::LevelState(FW_EntityManager& anEntityManager, PhysicsWorld& aPhysics
 	messageQueue.SubscribeToMessage<CollisionMessage>(std::bind(&LevelState::OnCollision, this, std::placeholders::_1));
 
 	myCurrentLevelID = 0;
-	LoadLevel(myCurrentLevelID);
+	//LoadLevel(myCurrentLevelID);
+
+	LoadTileSheet("blue_tiles.tsx");
+	LoadTiledLevel("PhysicsPlayground/Data/level_one.tmx");
 }
 
 FW_StateStack::State::UpdateResult LevelState::OnUpdate()
@@ -64,6 +68,116 @@ void LevelState::OnCollision(const CollisionMessage& aMessage)
 				}
 			}
 		}
+	}
+}
+
+void LevelState::LoadTileSheet(const char* aFilePath)
+{
+	FW_XMLParser parser(aFilePath);
+
+	if (parser.BeginElement("tileset"))
+	{
+		FW_String tilesetName = parser.GetStringAttribute("name");
+		int tileWidth = parser.GetIntAttribute("tilewidth");
+		int tileHeight = parser.GetIntAttribute("tileheight");
+		int tileCount = parser.GetIntAttribute("tilecount");
+
+		if (parser.BeginElement("grid"))
+		{
+			FW_String orientation = parser.GetStringAttribute("orientation");
+			int gridWidth = parser.GetIntAttribute("width");
+			int gridHeight = parser.GetIntAttribute("height");
+
+			parser.EndElement();
+		}
+
+		while (parser.BeginElement("tile"))
+		{
+			Tilesheet::TileData& tile = myTileSheet.myTiles.Add();
+			tile.myID = parser.GetIntAttribute("id");;
+
+			if (parser.BeginElement("image"))
+			{
+				tile.myWidth = parser.GetIntAttribute("width");
+				tile.myHeight = parser.GetIntAttribute("height");
+				tile.myTexturePath = parser.GetStringAttribute("source");
+				parser.EndElement();
+			}
+
+			parser.EndElement();
+		}
+
+		parser.EndElement();
+	}
+}
+
+void LevelState::LoadTiledLevel(const char* aFilePath)
+{
+	FW_XMLParser parser(aFilePath);
+
+	if (parser.BeginElement("map"))
+	{
+		int width = parser.GetIntAttribute("width");
+		int height = parser.GetIntAttribute("height");
+
+		// This seems annoying? Add 'SkipElement()'?
+		if (parser.BeginElement("tileset"))
+		{
+			parser.EndElement();
+		}
+
+		if (parser.BeginElement("layer"))
+		{
+			if (parser.BeginElement("data"))
+			{
+				while (parser.BeginElement("chunk"))
+				{
+					int startX = parser.GetIntAttribute("x");
+					int startY = parser.GetIntAttribute("y");
+
+					int chunkWidth = parser.GetIntAttribute("width");
+					int chunkHeight = parser.GetIntAttribute("height");
+
+					FW_GrowingArray<int> tileIDs;
+					for (int y = 0; y < chunkHeight; ++y)
+					{
+						parser.GetRawDataAsInt(tileIDs, ",");
+
+						for(int x = 0; x < tileIDs.Count(); ++x)
+						{
+							if (tileIDs[x] != 0)
+							{
+								for (Tilesheet::TileData& tile : myTileSheet.myTiles)
+								{
+									if (tile.myID == tileIDs[x] - 1)
+									{
+										FW_String textureFilePath = "BlueTiles/";
+										textureFilePath += tile.myTexturePath;
+
+										Vector2f position;
+										position.x = (startX + x) * 64.f;
+										position.y = (startY + y) * 64.f;
+
+										FW_Renderer::Texture texture = FW_Renderer::GetTexture(textureFilePath.GetBuffer());
+										CreateTile(position, texture, textureFilePath.GetBuffer());
+									}
+								}
+							}
+							int apa = 5;
+							++apa;
+						}
+					}
+
+					parser.EndElement();
+				}
+
+				parser.EndElement();
+			}
+
+			parser.EndElement();
+		}
+
+		parser.EndElement();
 	}
 }
 
