@@ -30,6 +30,9 @@ public:
 	FW_String& operator+=(const char aString);
 
 	bool operator==(const FW_String &aString) const;
+	bool operator==(const char* aString) const;
+	bool operator!=(const FW_String &aString) const;
+	bool operator!=(const char* aString) const;
 	void operator=(const FW_String &aString);
 	void operator=(const char* aString);
 
@@ -212,10 +215,24 @@ inline FW_String& FW_String::operator+=(const char aChar)
 	return *this;
 }
 
-
 inline bool FW_String::operator==(const FW_String &aString) const
 {
 	return myHash == aString.myHash;
+}
+
+inline bool FW_String::operator==(const char* aString) const
+{
+	return strcmp(myData, aString) == 0;
+}
+
+inline bool FW_String::operator!=(const FW_String &aString) const
+{
+	return !(*this == aString);
+}
+
+inline bool FW_String::operator!=(const char* aString) const
+{
+	return !(*this == aString);
 }
 
 inline void FW_String::operator=(const FW_String &aString)

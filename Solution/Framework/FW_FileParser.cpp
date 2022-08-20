@@ -13,8 +13,10 @@ FW_FileParser::~FW_FileParser()
 
 bool FW_FileParser::ReadLine(FW_String& outLine)
 {
-	char text[64];
-	if (fgets(text, 64, myFile) == NULL)
+	char text[256];
+
+	char* result = fgets(text, 256, myFile);
+	if (result == NULL)
 		return false;
 
 	outLine = text;
@@ -41,7 +43,7 @@ void FW_FileParser::TrimBeginAndEnd(FW_String& aLine) const
 		aLine = aLine.SubStr(begin, end);
 }
 
-void FW_FileParser::SplitLine(const FW_String& aLine, FW_GrowingArray<FW_String>& outWords) const
+void FW_FileParser::SplitLineOnSpace(const FW_String& aLine, FW_GrowingArray<FW_String>& outWords) const
 {
 	outWords.RemoveAll();
 
@@ -64,7 +66,7 @@ void FW_FileParser::SplitLine(const FW_String& aLine, FW_GrowingArray<FW_String>
 	outWords.Add(aLine.SubStr(begin, aLine.Length()));
 }
 
-void FW_FileParser::SplitWord(const FW_String& aLine, const char* aSeperator, FW_GrowingArray<FW_String>& outWords) const
+void FW_FileParser::SplitLine(const FW_String& aLine, const char* aSeperator, FW_GrowingArray<FW_String>& outWords) const
 {
 	outWords.RemoveAll();
 

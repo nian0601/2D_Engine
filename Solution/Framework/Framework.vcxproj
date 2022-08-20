@@ -161,6 +161,7 @@
     <ClInclude Include="FW_IGame.h" />
     <ClInclude Include="FW_Threading.h" />
     <ClInclude Include="FW_Vector3.h" />
+    <ClInclude Include="FW_XMLParser.h" />
     <ClInclude Include="imgui\imconfig.h" />
     <ClInclude Include="imgui\imgui-SFML.h" />
     <ClInclude Include="imgui\imgui-SFML_export.h" />
@@ -192,6 +193,7 @@
     <ClCompile Include="FW_Murmur.cpp" />
     <ClCompile Include="FW_RenderSystem.cpp" />
     <ClCompile Include="FW_StateStack.cpp" />
+    <ClCompile Include="FW_XMLParser.cpp" />
     <ClCompile Include="imgui\imgui-SFML.cpp" />
     <ClCompile Include="imgui\imgui.cpp" />
     <ClCompile Include="imgui\imgui_demo.cpp" />
