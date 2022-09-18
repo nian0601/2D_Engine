@@ -1,0 +1,57 @@
+{
+    "Map/SizeTest": {
+        "height": 4300,
+        "width": 2
+    },
+    "activeFile": "",
+    "expandedProjectPaths": [
+    ],
+    "fileStates": {
+        "": {
+            "scaleInDock": 1
+        },
+        "C:/_GIT/2D_Engine/Application/PhysicsPlayground/Data/Levels/test_level.tmx": {
+            "scale": 0.75,
+            "selectedLayer": 1,
+            "viewCenter": {
+                "x": 128.66666666666663,
+                "y": 592.6666666666665
+            }
+        },
+        "C:/_GIT/2D_Engine/Application/PhysicsPlayground/Data/Levels/test_level.tmx#SpecialsTest": {
+            "dynamicWrapping": true,
+            "scaleInDock": 1,
+            "scaleInEditor": 1
+        },
+        "C:/_GIT/2D_Engine/Application/PhysicsPlayground/Data/Tilesets/Blue/BlueTiles.tsx": {
+            "dynamicWrapping": false,
+            "scaleInDock": 0.75,
+            "scaleInEditor": 1
+        },
+        "C:/_GIT/2D_Engine/Application/PhysicsPlayground/Data/Tilesets/Specials/Specials.tsx": {
+            "dynamicWrapping": true,
+            "scaleInDock": 1,
+            "scaleInEditor": 1
+        }
+    },
+    "last.imagePath": "C:/_GIT/2D_Engine/Application/PhysicsPlayground/Data/Tilesets/Specials",
+    "map.fixedSize": false,
+    "map.lastUsedFormat": "tmx",
+    "map.tileHeight": 64,
+    "map.tileWidth": 64,
+    "openFiles": [
+        "C:/_GIT/2D_Engine/Application/PhysicsPlayground/Data/Tilesets/Blue/BlueTiles.tsx",
+        "C:/_GIT/2D_Engine/Application/PhysicsPlayground/Data/Tilesets/Specials/Specials.tsx",
+        "C:/_GIT/2D_Engine/Application/PhysicsPlayground/Data/Levels/test_level.tmx"
+    ],
+    "project": "Spareparty_Tiled.tiled-project",
+    "property.type": "bool",
+    "recentFiles": [
+        "C:/_GIT/2D_Engine/Application/PhysicsPlayground/Data/Tilesets/Blue/BlueTiles.tsx",
+        "C:/_GIT/2D_Engine/Application/PhysicsPlayground/Data/Tilesets/Specials/Specials.tsx",
+        "C:/_GIT/2D_Engine/Application/PhysicsPlayground/Data/Levels/test_level.tmx"
+    ],
+    "tileset.embedInMap": true,
+    "tileset.lastUsedFormat": "tsx",
+    "tileset.type": 1
+}
