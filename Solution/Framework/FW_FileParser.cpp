@@ -1,8 +1,12 @@
 #include "FW_FileParser.h"
+#include "FW_FileSystem.h"
 
 FW_FileParser::FW_FileParser(const char* aFile)
 {
-	int result = fopen_s(&myFile, aFile, "r");
+	FW_String realFilePath;
+	FW_FileSystem::GetRealFilePath(aFile, realFilePath);
+
+	int result = fopen_s(&myFile, realFilePath.GetBuffer(), "r");
 	assert(result == 0 && "Failed to open file");
 }
 

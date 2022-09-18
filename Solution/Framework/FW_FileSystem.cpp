@@ -11,6 +11,11 @@ namespace FW_FileSystem
 		ourDataFolderPath += "/Data/";
 	}
 
+	void GetRealFilePath(const FW_String& aFilePath, FW_String& aFilePathOut)
+	{
+		aFilePathOut = ourDataFolderPath + aFilePath;
+	}
+
 	bool GetAllFilesFromDirectory(const char* aDirectory, FW_GrowingArray<FileInfo>& someOutFilePaths)
 	{
 		FW_ASSERT(strlen(aDirectory) + 3 < MAX_PATH, "Path to directory is too long");
@@ -62,6 +67,12 @@ namespace FW_FileSystem
 	{
 		int findIndex = aFilePath.RFind("/");
 		aNameOut = aFilePath.SubStr(findIndex + 1, aFilePath.Length());
+	}
+
+	void RemoveFileName(const FW_String& aFilePath, FW_String& aFilePathOut)
+	{
+		int findIndex = aFilePath.RFind("/");
+		aFilePathOut = aFilePath.SubStr(0, findIndex);
 	}
 
 	void GetFileExtention(const FW_String& aFilePath, FW_String& aExtentionOut)

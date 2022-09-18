@@ -6,6 +6,7 @@ class FW_XMLParser
 {
 public:
 	FW_XMLParser(const char* aFile);
+	FW_XMLParser(const FW_String& aFile);
 
 	bool BeginElement(const char* aElementName);
 	void EndElement();
@@ -18,6 +19,7 @@ public:
 private:
 	FW_FileParser myFileParser;
 	FW_String myCurrentElement;
+	bool myWasCurrentElementConsumed = true;
 
 	// Sureley this is a nicer solution to this?
 	// Is there more data that should be kept alive throughout nested elements?

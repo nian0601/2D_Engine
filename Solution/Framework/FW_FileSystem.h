@@ -29,8 +29,11 @@ namespace FW_FileSystem
 
 	void SetDataFolder(const char* aFolderName);
 
+	void GetRealFilePath(const FW_String& aFilePath, FW_String& aFilePathOut);
+
 	bool GetAllFilesFromDirectory(const char* aDirectory, FW_GrowingArray<FileInfo>& someOutFilePaths);
 	void GetFileName(const FW_String& aFilePath, FW_String& aNameOut);
+	void RemoveFileName(const FW_String& aFilePath, FW_String& aFilePathOut);
 	void GetFileExtention(const FW_String& aFilePath, FW_String& aExtentionOut);
 	void RemoveFileExtention(const FW_String& aFilePath, FW_String& aNameOut);
 	bool GetFileInfo(const FW_String& aFilePath, FileInfo& aFileInfoOut);

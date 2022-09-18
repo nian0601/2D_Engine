@@ -5,6 +5,7 @@
 #include <FW_XMLParser.h>
 
 #include "PhysicsWorld.h"
+#include "FW_FileSystem.h"
 
 LevelState::LevelState(FW_EntityManager& anEntityManager, PhysicsWorld& aPhysicsWorld)
 	: myEntityManager(anEntityManager)
@@ -17,8 +18,9 @@ LevelState::LevelState(FW_EntityManager& anEntityManager, PhysicsWorld& aPhysics
 	myCurrentLevelID = 0;
 	//LoadLevel(myCurrentLevelID);
 
-	LoadTileSheet("blue_tiles.tsx");
-	LoadTiledLevel("PhysicsPlayground/Data/level_one.tmx");
+	//LoadTileSheet("blue_tiles.tsx");
+	//LoadTiledLevel("PhysicsPlayground/Data/level_one.tmx");
+	LoadTiledLevel("Levels/test_level.tmx");
 }
 
 FW_StateStack::State::UpdateResult LevelState::OnUpdate()
@@ -71,46 +73,6 @@ void LevelState::OnCollision(const CollisionMessage& aMessage)
 	}
 }
 
-void LevelState::LoadTileSheet(const char* aFilePath)
-{
-	FW_XMLParser parser(aFilePath);
-
-	if (parser.BeginElement("tileset"))
-	{
-		FW_String tilesetName = parser.GetStringAttribute("name");
-		int tileWidth = parser.GetIntAttribute("tilewidth");
-		int tileHeight = parser.GetIntAttribute("tileheight");
-		int tileCount = parser.GetIntAttribute("tilecount");
-
-		if (parser.BeginElement("grid"))
-		{
-			FW_String orientation = parser.GetStringAttribute("orientation");
-			int gridWidth = parser.GetIntAttribute("width");
-			int gridHeight = parser.GetIntAttribute("height");
-
-			parser.EndElement();
-		}
-
-		while (parser.BeginElement("tile"))
-		{
-			Tilesheet::TileData& tile = myTileSheet.myTiles.Add();
-			tile.myID = parser.GetIntAttribute("id");;
-
-			if (parser.BeginElement("image"))
-			{
-				tile.myWidth = parser.GetIntAttribute("width");
-				tile.myHeight = parser.GetIntAttribute("height");
-				tile.myTexturePath = parser.GetStringAttribute("source");
-				parser.EndElement();
-			}
-
-			parser.EndElement();
-		}
-
-		parser.EndElement();
-	}
-}
-
 void LevelState::LoadTiledLevel(const char* aFilePath)
 {
 	FW_XMLParser parser(aFilePath);
@@ -120,13 +82,25 @@ void LevelState::LoadTiledLevel(const char* aFilePath)
 		int width = parser.GetIntAttribute("width");
 		int height = parser.GetIntAttribute("height");
 
-		// This seems annoying? Add 'SkipElement()'?
-		if (parser.BeginElement("tileset"))
+		FW_String tilesetSource;
+		int firstGID = 0;
+		
+		while (parser.BeginElement("tileset"))
 		{
+			FW_String tilesetPath;
+			FW_FileSystem::RemoveFileName(aFilePath, tilesetPath);
+			
+			tilesetSource = parser.GetStringAttribute("source");
+			tilesetSource = tilesetPath + parser.GetStringAttribute("source");
+
+			firstGID = parser.GetIntAttribute("firstgid");
+
+			LoadTileSheet(tilesetSource.GetBuffer(), firstGID);
+
 			parser.EndElement();
 		}
 
-		if (parser.BeginElement("layer"))
+		while (parser.BeginElement("layer"))
 		{
 			if (parser.BeginElement("data"))
 			{
@@ -149,28 +123,75 @@ void LevelState::LoadTiledLevel(const char* aFilePath)
 							{
 								for (Tilesheet::TileData& tile : myTileSheet.myTiles)
 								{
-									if (tile.myID == tileIDs[x] - 1)
+									if (tile.myID == tileIDs[x])
 									{
-										FW_String textureFilePath = "BlueTiles/";
-										textureFilePath += tile.myTexturePath;
-
 										Vector2f position;
 										position.x = (startX + x) * 64.f;
 										position.y = (startY + y) * 64.f;
 
-										FW_Renderer::Texture texture = FW_Renderer::GetTexture(textureFilePath.GetBuffer());
-										CreateTile(position, texture, textureFilePath.GetBuffer());
+										FW_Renderer::Texture texture = FW_Renderer::GetTexture(tile.myTexturePath.GetBuffer());
+										CreateTile(position, texture, tile.myTexturePath.GetBuffer());
 									}
 								}
 							}
-							int apa = 5;
-							++apa;
 						}
 					}
 
 					parser.EndElement();
 				}
 
+				parser.EndElement();
+			}
+
+			parser.EndElement();
+		}
+
+		parser.EndElement();
+	}
+}
+
+void LevelState::LoadTileSheet(const char* aFilePath, int aFirstTileID)
+{
+	FW_XMLParser parser(aFilePath);
+
+	FW_String tileBasePath;
+	FW_FileSystem::RemoveFileName(aFilePath, tileBasePath);
+
+	if (parser.BeginElement("tileset"))
+	{
+		FW_String tilesetName = parser.GetStringAttribute("name");
+		int tileWidth = parser.GetIntAttribute("tilewidth");
+		int tileHeight = parser.GetIntAttribute("tileheight");
+		int tileCount = parser.GetIntAttribute("tilecount");
+
+		if (parser.BeginElement("grid"))
+		{
+			FW_String orientation = parser.GetStringAttribute("orientation");
+			int gridWidth = parser.GetIntAttribute("width");
+			int gridHeight = parser.GetIntAttribute("height");
+
+			parser.EndElement();
+		}
+
+		while (parser.BeginElement("tile"))
+		{
+			Tilesheet::TileData& tile = myTileSheet.myTiles.Add();
+			tile.myID = parser.GetIntAttribute("id") + aFirstTileID;
+
+			if (parser.BeginElement("properties"))
+			{
+				while (parser.BeginElement("property"))
+				{
+					parser.EndElement();
+				}
+				parser.EndElement();
+			}
+
+			if (parser.BeginElement("image"))
+			{
+				tile.myWidth = parser.GetIntAttribute("width");
+				tile.myHeight = parser.GetIntAttribute("height");
+				tile.myTexturePath = tileBasePath + parser.GetStringAttribute("source");
 				parser.EndElement();
 			}
 

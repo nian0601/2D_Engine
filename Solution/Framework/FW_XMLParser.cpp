@@ -6,19 +6,34 @@ FW_XMLParser::FW_XMLParser(const char* aFile)
 	myFileParser.ReadLine(myCurrentElement);
 }
 
+FW_XMLParser::FW_XMLParser(const FW_String& aFile)
+	: FW_XMLParser(aFile.GetBuffer())
+{
+}
+
 bool FW_XMLParser::BeginElement(const char* aElementName)
 {
-	myAttributes.RemoveAll();
+	if (myWasCurrentElementConsumed)
+	{
+		myAttributes.RemoveAll();
 
-	myFileParser.ReadLine(myCurrentElement);
-	myFileParser.TrimBeginAndEnd(myCurrentElement);
+		myFileParser.ReadLine(myCurrentElement);
+		myFileParser.TrimBeginAndEnd(myCurrentElement);
 
-	myFileParser.SplitLineOnSpace(myCurrentElement, myTempSplitElementStrings);
+		myFileParser.SplitLineOnSpace(myCurrentElement, myTempSplitElementStrings);	
+	}
 
 	FW_String parsedElementName = myTempSplitElementStrings[0].SubStr(1, myTempSplitElementStrings[0].Length());
-	if (parsedElementName != aElementName)
-		return false;
+	if (parsedElementName[parsedElementName.Length()] == '>') // Surely there is a nicer solution to this?
+		parsedElementName = parsedElementName.SubStr(0, parsedElementName.Length() - 1);
 
+	if (parsedElementName != aElementName)
+	{
+		myWasCurrentElementConsumed = false;
+		return false;
+	}
+
+	myWasCurrentElementConsumed = true;
 	myTempSplitElementStrings.RemoveNonCyclicAtIndex(0);
 
 	bool currentElementIsOneLine = false;
@@ -52,10 +67,11 @@ void FW_XMLParser::EndElement()
 {
 	FW_ASSERT(!myElementOnelinerStack.IsEmpty(), "Tried to end 'EndElement' before successfully calling 'BeingElement'");
 
-	if(!myElementOnelinerStack.GetLast())
+	if (!myElementOnelinerStack.GetLast() && myWasCurrentElementConsumed)
 		myFileParser.ReadLine(myCurrentElement);
 
 	myElementOnelinerStack.RemoveLast();
+	myWasCurrentElementConsumed = true;
 }
 
 int FW_XMLParser::GetIntAttribute(const char* aAttributeName)

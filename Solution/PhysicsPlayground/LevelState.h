@@ -20,8 +20,8 @@ private:
 	void OnPreEntityRemoved(const FW_PreEntityRemovedMessage& aMessage);
 	void OnCollision(const CollisionMessage& aMessage);
 
-	void LoadTileSheet(const char* aFilePath);
 	void LoadTiledLevel(const char* aFilePath);
+	void LoadTileSheet(const char* aFilePath, int aFirstTileID);
 
 	void LoadLevel(int aLevelID);
 	void LoadLevel(int aMapData[10][10]);
