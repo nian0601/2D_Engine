@@ -12,6 +12,7 @@ namespace FW_Time
 
 	float GetAverageFramerate();
 	TimeUnit GetTime();
+	TimeUnit GetCurrentExactTime();
 
 	float ConvertTimeUnitToGameTime(TimeUnit aTimeUnit);
 	TimeUnit ConvertGameTimeToTimeUnit(float aGameTime);

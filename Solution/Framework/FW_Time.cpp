@@ -12,23 +12,6 @@ namespace FW_Time
 	static FW_CircularArray<float, 64> myRecentFrameTimes;
 	static float myAverageFramerate;
 
-	TimeUnit GetCurrentExactTime()
-	{
-		LARGE_INTEGER largeInt;
-		QueryPerformanceCounter(&largeInt);
-		return largeInt.QuadPart * 1000000 / myFrequency;
-	}
-
-	float ConvertTimeUnitToGameTime(TimeUnit aTimeUnit)
-	{
-		return aTimeUnit / 1000000.f;
-	}
-
-	TimeUnit ConvertGameTimeToTimeUnit(float aGameTime)
-	{
-		return static_cast<TimeUnit>(aGameTime * 1000000.f);
-	}
-
 	void Init()
 	{
 		LARGE_INTEGER largeInt;
@@ -77,5 +60,22 @@ namespace FW_Time
 	TimeUnit GetTime()
 	{
 		return myCurrentTime;
+	}
+
+	TimeUnit GetCurrentExactTime()
+	{
+		LARGE_INTEGER largeInt;
+		QueryPerformanceCounter(&largeInt);
+		return largeInt.QuadPart * 1000000 / myFrequency;
+	}
+
+	float ConvertTimeUnitToGameTime(TimeUnit aTimeUnit)
+	{
+		return aTimeUnit / 1000000.f;
+	}
+
+	TimeUnit ConvertGameTimeToTimeUnit(float aGameTime)
+	{
+		return static_cast<TimeUnit>(aGameTime * 1000000.f);
 	}
 }
