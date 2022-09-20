@@ -25,15 +25,22 @@ public:
 	FW_CircularArray() { myData = new ObjectType[ElementCount]; }
 	~FW_CircularArray() { delete[] myData; }
 
-	void Add(const ObjectType& anObject)
+	ObjectType& Add()
 	{
-		myData[myCurrentIndex] = anObject;
+		ObjectType& object = myData[myCurrentIndex];
 		++myCurrentIndex;
+
 		myTotalCount = FW_Min(++myTotalCount, ElementCount);
 		if (myCurrentIndex >= ElementCount)
-		{
 			myCurrentIndex = 0;
-		}
+
+		return object;
+	}
+
+	void Add(const ObjectType& anObject)
+	{
+		ObjectType& addedObject = Add();
+		addedObject = anObject;
 	}
 
 	void RemoveAll()
