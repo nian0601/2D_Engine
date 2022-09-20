@@ -3,6 +3,7 @@
 #include <FW_EntityManager.h>
 #include <FW_MessageQueue.h>
 #include <FW_XMLParser.h>
+#include <FW_Profiler.h>
 
 #include "PhysicsWorld.h"
 #include "FW_FileSystem.h"
@@ -75,6 +76,8 @@ void LevelState::OnCollision(const CollisionMessage& aMessage)
 
 void LevelState::LoadTiledLevel(const char* aFilePath)
 {
+	FW_PROFILE_FUNCTION();
+
 	FW_XMLParser parser(aFilePath);
 
 	if (parser.BeginElement("map"))
@@ -85,19 +88,23 @@ void LevelState::LoadTiledLevel(const char* aFilePath)
 		FW_String tilesetSource;
 		int firstGID = 0;
 		
-		while (parser.BeginElement("tileset"))
 		{
-			FW_String tilesetPath;
-			FW_FileSystem::RemoveFileName(aFilePath, tilesetPath);
-			
-			tilesetSource = parser.GetStringAttribute("source");
-			tilesetSource = tilesetPath + parser.GetStringAttribute("source");
+			FW_PROFILE_SCOPE("Tileset Loading");
 
-			firstGID = parser.GetIntAttribute("firstgid");
+			while (parser.BeginElement("tileset"))
+			{
+				FW_String tilesetPath;
+				FW_FileSystem::RemoveFileName(aFilePath, tilesetPath);
 
-			LoadTileSheet(tilesetSource.GetBuffer(), firstGID);
+				tilesetSource = parser.GetStringAttribute("source");
+				tilesetSource = tilesetPath + parser.GetStringAttribute("source");
 
-			parser.EndElement();
+				firstGID = parser.GetIntAttribute("firstgid");
+
+				LoadTileSheet(tilesetSource.GetBuffer(), firstGID);
+
+				parser.EndElement();
+			}
 		}
 
 		while (parser.BeginElement("layer"))

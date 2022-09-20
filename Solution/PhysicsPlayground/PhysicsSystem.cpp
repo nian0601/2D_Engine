@@ -8,11 +8,13 @@
 #include "SparepartyComponents.h"
 #include "PhysicsWorld.h"
 #include <FW_MessageQueue.h>
+#include <FW_Profiler.h>
 
 namespace PhysicSystem
 {
 	void Run(FW_EntityManager& aEntityManager, PhysicsWorld& aPhysicsWorld)
 	{
+		FW_PROFILE_FUNCTION();
 		float delta = FW_Time::GetDelta();
 
 		FW_ComponentStorage<PlayerComponent>& playerStorage = aEntityManager.GetComponentStorage<PlayerComponent>();

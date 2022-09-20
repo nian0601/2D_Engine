@@ -16,6 +16,7 @@ public:
 private:
 	void BuildImGUIStuff();
 
+	int myFrameCounter = 0;
 	sf::RenderWindow* myRenderWindow;
 	bool myShowConsole = false;
 	bool myShowIMGuiDemoWindow = false;

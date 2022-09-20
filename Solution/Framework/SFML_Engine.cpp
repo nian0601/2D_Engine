@@ -8,6 +8,7 @@
 
 #include "FW_IGame.h"
 #include "FW_Time.h"
+#include "FW_Profiler.h"
 
 #include <SFML/Graphics.hpp>
 
@@ -20,6 +21,8 @@
 
 SFML_Engine::SFML_Engine(int aWidth, int aHeight, const char* aWindowTitle)
 {
+	FW_Profiler::StartNewFrame(0);
+
 	myRenderWindow = new sf::RenderWindow(sf::VideoMode(aWidth, aHeight), aWindowTitle);
 	SFML_Renderer::Init(myRenderWindow);
 	ImGui::SFML::Init(*myRenderWindow);
@@ -41,6 +44,9 @@ void SFML_Engine::Run(FW_IGame& aGame)
 
 	while (myRenderWindow->isOpen())
 	{
+		++myFrameCounter;
+		FW_Profiler::StartNewFrame(myFrameCounter);
+
 		sf::Event event;
 		while (myRenderWindow->pollEvent(event))
 		{
@@ -129,4 +135,6 @@ void SFML_Engine::BuildImGUIStuff()
 
 	if(myShowIMGuiDemoWindow)
 		ImGui::ShowDemoWindow();
+
+	FW_Profiler::DisplayProfiler();
 }

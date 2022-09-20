@@ -147,6 +147,8 @@
     <ClInclude Include="FW_FileProcessor.h" />
     <ClInclude Include="FW_FileSystem.h" />
     <ClInclude Include="FW_GrowingArray.h" />
+    <ClInclude Include="FW_Hashing.h" />
+    <ClInclude Include="FW_Hashmap.h" />
     <ClInclude Include="FW_Includes.h" />
     <ClInclude Include="FW_LevelLoader.h" />
     <ClInclude Include="FW_Logger.h" />
@@ -155,6 +157,7 @@
     <ClInclude Include="FW_MessageQueue.h" />
     <ClInclude Include="FW_Messages.h" />
     <ClInclude Include="FW_Murmur.h" />
+    <ClInclude Include="FW_Profiler.h" />
     <ClInclude Include="FW_RenderSystem.h" />
     <ClInclude Include="FW_StateStack.h" />
     <ClInclude Include="FW_String.h" />
@@ -191,6 +194,7 @@
     <ClCompile Include="FW_LevelLoader.cpp" />
     <ClCompile Include="FW_Logger.cpp" />
     <ClCompile Include="FW_Murmur.cpp" />
+    <ClCompile Include="FW_Profiler.cpp" />
     <ClCompile Include="FW_RenderSystem.cpp" />
     <ClCompile Include="FW_StateStack.cpp" />
     <ClCompile Include="FW_XMLParser.cpp" />

@@ -14,6 +14,7 @@
 #include <SFML_Renderer.h>
 #include <FW_MessageQueue.h>
 #include "LevelState.h"
+#include <FW_Profiler.h>
 
 Spareparty::Spareparty()
 {
@@ -33,6 +34,8 @@ Spareparty::~Spareparty()
 
 void Spareparty::Run()
 {
+	FW_PROFILE_FUNCTION();
+
 	float delta = FW_Time::GetDelta();
 
 	PhysicSystem::Run(myEntityManager, myPhysicsWorld);

@@ -86,6 +86,9 @@
     <ClInclude Include="FW_Matrix22.h" />
     <ClInclude Include="FW_StateStack.h" />
     <ClInclude Include="FW_XMLParser.h" />
+    <ClInclude Include="FW_Profiler.h" />
+    <ClInclude Include="FW_Hashmap.h" />
+    <ClInclude Include="FW_Hashing.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="SFML_Input.cpp">
@@ -134,6 +137,7 @@
     <ClCompile Include="FW_Time.cpp" />
     <ClCompile Include="FW_StateStack.cpp" />
     <ClCompile Include="FW_XMLParser.cpp" />
+    <ClCompile Include="FW_Profiler.cpp" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="ImGUI">
