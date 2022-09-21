@@ -51,7 +51,12 @@ namespace PhysicSystem
 			{
 				translation->myPosition = physComponent.myObject->myPosition;
 				translation->myOrientation = physComponent.myObject->myOrientation;
-			}			
+			}
+
+			if (PlayerComponent* player = aEntityManager.FindComponent<PlayerComponent>(physComponent.myEntity))
+			{
+				FW_Renderer::GetCamera().myPosition = physComponent.myObject->myPosition;
+			}
 		}
 
 		FW_MessageQueue& messageQueue = aEntityManager.GetMessageQueue();

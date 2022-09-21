@@ -12,6 +12,11 @@ namespace FW_Renderer
 		int myTextureID = -1;
 	};
 
+	struct Camera
+	{
+		Vector2f myPosition;
+	};
+
 	void Clear();
 	void FinishOffscreenBuffer();
 	void ResizeOffscreenBuffer(int aWidth, float anAspectRatio);
@@ -45,4 +50,7 @@ namespace FW_Renderer
 	void DeleteTexture(const Texture& aTexture);
 	void UpdatePixelsInTexture(const Texture& aTexture, void* somePixels);
 	void SaveTextureToFile(const Texture& aTexture, const char* aFileName);
+
+	Camera& GetCamera();
+	const Vector2f& GetCameraPosition();
 }

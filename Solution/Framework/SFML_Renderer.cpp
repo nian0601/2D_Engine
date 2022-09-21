@@ -25,6 +25,7 @@ namespace SFML_Renderer
 	static Vector2f ourCurrentRectangleSize;
 	static sf::IntRect ourCurrentTextureRect;
 	static float ourCurrentCircleRadius = 0.f;
+	static FW_Renderer::Camera ourCamera;
 
 	struct CachedTexture
 	{
@@ -68,6 +69,7 @@ namespace SFML_Renderer
 	void Init(sf::RenderWindow* aRenderWindow)
 	{
 		ourRenderWindow = aRenderWindow;
+		ourCamera.myPosition = Vector2f(0.f, 0.f);
 		FW_Renderer::ResizeOffscreenBuffer(ourRenderWindow->getSize().x, 16.f / 9.f);
 	}
 
@@ -117,6 +119,26 @@ namespace SFML_Renderer
 
 namespace FW_Renderer
 {
+	sf::Vector2f GetCameraAdjustedPosition(const Vector2i& aPosition)
+	{
+		const Vector2f& cameraPosition = GetCameraPosition();
+
+		sf::Vector2f position;
+		position.x = aPosition.x - (cameraPosition.x - GetScreenWidth() * 0.5f);
+		position.y = aPosition.y - (cameraPosition.y - GetScreenHeight() * 0.5f);
+		return position;
+	}
+
+	sf::Vector2f GetCameraAdjustedPosition(const Vector2f& aPosition)
+	{
+		const Vector2f& cameraPosition = GetCameraPosition();
+
+		sf::Vector2f position;
+		position.x = aPosition.x - (cameraPosition.x - GetScreenWidth() * 0.5f);
+		position.y = aPosition.y - (cameraPosition.y - GetScreenHeight() * 0.5f);
+		return position;
+	}
+
 	void Clear()
 	{
 		SFML_Renderer::ourOffscreenBuffer->clear();
@@ -212,7 +234,8 @@ namespace FW_Renderer
 		{
 			sf::Sprite sprite;
 			sprite.setTexture(*texture);
-			sprite.setPosition({ float(aPos.x), float(aPos.y) });
+			//sprite.setPosition({ float(aPos.x), float(aPos.y) });
+			sprite.setPosition(GetCameraAdjustedPosition(aPos));
 			sprite.setRotation(FW_RadiansToDegrees(aRotationInRadians));
 			SFML_Renderer::ourOffscreenBuffer->draw(sprite);
 		}
@@ -224,7 +247,8 @@ namespace FW_Renderer
 		{
 			sf::Sprite sprite;
 			sprite.setTexture(*texture);
-			sprite.setPosition({ float(aPos.x), float(aPos.y) });
+			//sprite.setPosition({ float(aPos.x), float(aPos.y) });
+			sprite.setPosition(GetCameraAdjustedPosition(aPos));
 			sprite.setRotation(FW_RadiansToDegrees(aRotationInRadians));
 
 			sf::IntRect textRect;
@@ -251,7 +275,8 @@ namespace FW_Renderer
 			sf::RectangleShape& rect = SFML_Renderer::ourRectangleShape;
 			rect.setFillColor(SFML_Renderer::GetSFMLColor(0xFFFFFFFF));
 			rect.setOrigin({ aSpriteRect.myExtents.x * 0.5f, aSpriteRect.myExtents.y * 0.5f });
-			rect.setPosition({ float(aSpriteRect.myCenterPos.x), float(aSpriteRect.myCenterPos.y) });
+			//rect.setPosition({ float(aSpriteRect.myCenterPos.x), float(aSpriteRect.myCenterPos.y) });
+			rect.setPosition(GetCameraAdjustedPosition(aSpriteRect.myCenterPos));
 			rect.setRotation(FW_RadiansToDegrees(aRotationInRadians));
 
 			if (aSpriteRect.myExtents.x != SFML_Renderer::ourCurrentRectangleSize.x || aSpriteRect.myExtents.y != SFML_Renderer::ourCurrentRectangleSize.y)
@@ -404,5 +429,15 @@ namespace FW_Renderer
 			fullPath.append(aFileName);
 			texture->copyToImage().saveToFile(fullPath.c_str());
 		}
+	}
+
+	Camera& GetCamera()
+	{
+		return SFML_Renderer::ourCamera;
+	}
+
+	const Vector2f& GetCameraPosition()
+	{
+		return SFML_Renderer::ourCamera.myPosition;
 	}
 }
