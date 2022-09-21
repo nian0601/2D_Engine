@@ -16,7 +16,6 @@ LevelState::LevelState(FW_EntityManager& anEntityManager, PhysicsWorld& aPhysics
 	messageQueue.SubscribeToMessage<FW_PreEntityRemovedMessage>(std::bind(&LevelState::OnPreEntityRemoved, this, std::placeholders::_1));
 	messageQueue.SubscribeToMessage<CollisionMessage>(std::bind(&LevelState::OnCollision, this, std::placeholders::_1));
 
-	myCurrentLevelID = 0;
 	LoadTiledLevel("level_one.tmx");
 }
 

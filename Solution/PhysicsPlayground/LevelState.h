@@ -50,7 +50,5 @@ private:
 
 	FW_EntityManager& myEntityManager;
 	PhysicsWorld& myPhysicsWorld;
-
-	int myCurrentLevelID;
 	LevelInformation myCurrentLevelInformation;
 };
