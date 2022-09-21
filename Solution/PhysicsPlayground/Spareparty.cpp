@@ -58,94 +58,12 @@ void Spareparty::Run()
 
 		FW_Renderer::RenderRect(MakeRect(mouseTilePosition, { 64.f, 64.f }), 0x44AAAAAA);
 
-		FW_EntityID entityUnderMouse = GetEntityUnderMouse();
-		if (entityUnderMouse != InvalidEntity)
-		{
-			if (FW_Input::WasMouseReleased(FW_Input::MouseButton::LEFTMB))
-			{
-				FW_GrowingArray<FW_EntityID> entities;
-				entities.Add(entityUnderMouse);
-				FW_Editor::SetSelectedEntities(entities);
-			}
-		}
-		else
-		{
-			if (FW_Input::IsMouseDown(FW_Input::MouseButton::LEFTMB))
-			{
-				if (mySelectedTexture.myTextureID != -1)
-				{
-					CreateTile(SnapPositionToGrid(FW_Input::GetMousePositionf()), mySelectedTexture);
-				}
-			}
-			else if (FW_Input::WasMouseReleased(FW_Input::MouseButton::LEFTMB))
-			{
-				FW_Editor::ClearSelectedEntities();
-			}
-			else if (FW_Input::WasMouseReleased(FW_Input::MouseButton::RIGHTMB))
-			{
-				FW_GrowingArray<Vector2f> newEntityPositions;
-				newEntityPositions.Add(mouseTilePosition);
-				FW_Editor::NewEntityPopup(newEntityPositions);
-			}
-		}
-
-		if (myTileTextures.IsEmpty())
-		{
-			FW_GrowingArray<FW_FileSystem::FileInfo> tileInfos;
-			FW_FileSystem::GetAllFilesFromDirectory("tiles", tileInfos);
-		
-			for (const FW_FileSystem::FileInfo& info : tileInfos)
-			{
-				myTileTextures.Add(FW_Renderer::GetTexture(info.myFilePath.GetBuffer()));
-			}
-		}
-
-		if (ImGui::CollapsingHeader("Tiles"))
-		{
-			for (int i = 0; i < myTileTextures.Count(); ++i)
-			{
-				if (i % 3 != 0)
-					ImGui::SameLine();
-
-				if (const sf::Texture* texture = SFML_Renderer::GetSFMLTexture(myTileTextures[i].myTextureID))
-				{
-					if (ImGui::ImageButton(*texture))
-					{
-						mySelectedTexture = myTileTextures[i];
-					}
-
-				}
-			}
-		}
+		//FW_EntityID entityUnderMouse = GetEntityUnderMouse();
 
 		FW_Editor::EndEditor();
 	}
 
 	myEntityManager.EndFrame();
-}
-
-FW_EntityID Spareparty::CreateTile(const Vector2f& aPosition, FW_Renderer::Texture aTileTexture, const char* aTextureFileName /*= ""*/)
-{
-	FW_EntityID tile = myEntityManager.CreateEmptyEntity();
-	RenderComponent& render = myEntityManager.AddComponent<RenderComponent>(tile);
-	render.myTextureFileName = aTextureFileName;
-	render.myTexture = aTileTexture;
-	render.mySpriteSize = render.myTexture.mySize;
-	render.myTextureRect = MakeRect<int>(0, 0, render.myTexture.mySize.x, render.myTexture.mySize.y);
-
-	TranslationComponent& translation = myEntityManager.AddComponent<TranslationComponent>(tile);
-	translation.myPosition = aPosition;
-
-	PhysicsComponent& physics = myEntityManager.AddComponent<PhysicsComponent>(tile);
-	physics.myObject = new PhysicsObject(new AABBShape(Vector2f(64.f, 64.f)));
-	physics.myObject->SetPosition(aPosition);
-	physics.myObject->myColor = 0x33AAAAAA;
-	physics.myObject->MakeStatic();
-	physics.myObject->myEntityID = tile;
-
-	myPhysicsWorld.AddObject(physics.myObject);
-
-	return tile;
 }
 
 FW_EntityID Spareparty::GetEntityUnderMouse()

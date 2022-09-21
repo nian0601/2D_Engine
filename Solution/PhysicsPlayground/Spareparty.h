@@ -19,8 +19,6 @@ public:
 	void Run();
 
 private:
-	FW_EntityID CreateTile(const Vector2f& aPosition, FW_Renderer::Texture aTileTexture, const char* aTextureFileName = "");
-
 	FW_EntityID GetEntityUnderMouse();
 	Vector2f SnapPositionToGrid(const Vector2f& aPosition) const;
 
@@ -28,9 +26,5 @@ private:
 	FW_EntityManager myEntityManager;
 	FW_StateStack myStateStack;
 
-	FW_GrowingArray<FW_Renderer::Texture> myTileTextures;
-	FW_Renderer::Texture mySelectedTexture;
 	bool myRenderPhysicsObjects = false;
-
-	int myCurrentLevelID;
 };
