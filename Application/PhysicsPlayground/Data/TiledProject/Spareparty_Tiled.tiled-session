@@ -3,19 +3,35 @@
         "height": 4300,
         "width": 2
     },
-    "activeFile": "",
+    "activeFile": "C:/_GIT/2D_Engine/Application/PhysicsPlayground/Data/Levels/test_level.tmx",
     "expandedProjectPaths": [
     ],
     "fileStates": {
         "": {
             "scaleInDock": 1
         },
-        "C:/_GIT/2D_Engine/Application/PhysicsPlayground/Data/Levels/test_level.tmx": {
-            "scale": 0.75,
-            "selectedLayer": 1,
+        "C:/_GIT/2D_Engine/Application/PhysicsPlayground/Data/Levels/level_one.tmx": {
+            "scale": 0.5,
+            "selectedLayer": 0,
             "viewCenter": {
-                "x": 128.66666666666663,
-                "y": 592.6666666666665
+                "x": 745,
+                "y": 157
+            }
+        },
+        "C:/_GIT/2D_Engine/Application/PhysicsPlayground/Data/Levels/level_two.tmx": {
+            "scale": 1,
+            "selectedLayer": 0,
+            "viewCenter": {
+                "x": 354.5,
+                "y": 638.5
+            }
+        },
+        "C:/_GIT/2D_Engine/Application/PhysicsPlayground/Data/Levels/test_level.tmx": {
+            "scale": 0.33,
+            "selectedLayer": 0,
+            "viewCenter": {
+                "x": 640.9090909090908,
+                "y": 456.060606060606
             }
         },
         "C:/_GIT/2D_Engine/Application/PhysicsPlayground/Data/Levels/test_level.tmx#SpecialsTest": {
@@ -45,10 +61,10 @@
         "C:/_GIT/2D_Engine/Application/PhysicsPlayground/Data/Levels/test_level.tmx"
     ],
     "project": "Spareparty_Tiled.tiled-project",
-    "property.type": "bool",
+    "property.type": "file",
     "recentFiles": [
-        "C:/_GIT/2D_Engine/Application/PhysicsPlayground/Data/Tilesets/Blue/BlueTiles.tsx",
         "C:/_GIT/2D_Engine/Application/PhysicsPlayground/Data/Tilesets/Specials/Specials.tsx",
+        "C:/_GIT/2D_Engine/Application/PhysicsPlayground/Data/Tilesets/Blue/BlueTiles.tsx",
         "C:/_GIT/2D_Engine/Application/PhysicsPlayground/Data/Levels/test_level.tmx"
     ],
     "tileset.embedInMap": true,

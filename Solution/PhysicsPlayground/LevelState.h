@@ -17,36 +17,40 @@ public:
 	FW_StateStack::State::UpdateResult OnUpdate() override;
 
 private:
+	struct Tilesheet
+	{
+		struct TileData
+		{
+			int myID = -1; // When I have moved over the Hashmap-implementation then this could be used as a key to that for easier lookups
+			int myWidth = 0;
+			int myHeight = 0;
+			FW_String myTexturePath;
+
+			bool myIsSpawnPoint = false;
+			bool myIsGoal = false;
+		};
+
+		FW_GrowingArray<TileData> myTiles;
+	};
+
+	struct LevelInformation
+	{
+		Tilesheet myTileSheet;
+		FW_String myLevelName;
+		FW_String myNextLevelName;
+	};
+
 	void OnPreEntityRemoved(const FW_PreEntityRemovedMessage& aMessage);
 	void OnCollision(const CollisionMessage& aMessage);
 
-	void LoadTiledLevel(const char* aFilePath);
+	void LoadTiledLevel(const char* aLevelName);
 	void LoadTileSheet(const char* aFilePath, int aFirstTileID);
 
-	void LoadLevel(int aLevelID);
-	void LoadLevel(int aMapData[10][10]);
-
-	FW_EntityID CreateTile(const Vector2f& aPosition, int aTileID);
-	FW_EntityID CreateTile(const Vector2f& aPosition, FW_Renderer::Texture aTileTexture, const char* aTextureFileName = "");
-	FW_EntityID CreateGoal(const Vector2f& aPosition);
-	FW_EntityID CreatePlayer(const Vector2f& aPosition);
+	FW_EntityID CreateTile(const Vector2f& aPosition, const Tilesheet::TileData& someTileData);
 
 	FW_EntityManager& myEntityManager;
 	PhysicsWorld& myPhysicsWorld;
 
 	int myCurrentLevelID;
-
-	struct Tilesheet
-	{
-		struct TileData
-		{
-			int myID; // When I have moved over the Hashmap-implementation then this could be used as a key to that for easier lookups
-			int myWidth;
-			int myHeight;
-			FW_String myTexturePath;
-		};
-
-		FW_GrowingArray<TileData> myTiles;
-	};
-	Tilesheet myTileSheet;
+	LevelInformation myCurrentLevelInformation;
 };
