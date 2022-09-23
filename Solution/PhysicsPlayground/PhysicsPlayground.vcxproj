@@ -124,6 +124,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="CameraSystem.h" />
     <ClInclude Include="ChainBuilder.h" />
     <ClInclude Include="LevelState.h" />
     <ClInclude Include="PhysicsPlayground.h" />
@@ -136,6 +137,7 @@
     <ClInclude Include="Spareparty_TODO.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="CameraSystem.cpp" />
     <ClCompile Include="ChainBuilder.cpp" />
     <ClCompile Include="LevelState.cpp" />
     <ClCompile Include="PhysicsPlayground.cpp" />

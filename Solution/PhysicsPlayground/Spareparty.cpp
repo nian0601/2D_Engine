@@ -18,13 +18,6 @@
 
 Spareparty::Spareparty()
 {
-	myEntityManager.RegisterComponent<PhysicsComponent>();
-	myEntityManager.RegisterComponent<PlayerComponent>();
-	myEntityManager.RegisterComponent<GoalComponent>();
-
-	FW_MessageQueue& messageQueue = myEntityManager.GetMessageQueue();
-	messageQueue.RegisterMessageType<CollisionMessage>();
-
 	myStateStack.PushMajorState(new LevelState(myEntityManager, myPhysicsWorld));
 }
 
@@ -37,9 +30,6 @@ void Spareparty::Run()
 	FW_PROFILE_FUNCTION();
 
 	float delta = FW_Time::GetDelta();
-
-	PhysicSystem::Run(myEntityManager, myPhysicsWorld);
-	FW_RenderSystem::Run(myEntityManager);
 
 	myStateStack.Update();
 

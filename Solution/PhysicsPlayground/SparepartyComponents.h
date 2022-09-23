@@ -37,6 +37,12 @@ struct GoalComponent
 	DEFINE_COMPONENT(GoalComponent);
 };
 
+struct CameraControllerComponent
+{
+	DEFINE_COMPONENT(GoalComponent);
+};
+
+
 
 //////////////////////////////////////////////////////////////////////////
 

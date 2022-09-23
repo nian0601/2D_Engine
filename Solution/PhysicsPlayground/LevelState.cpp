@@ -7,12 +7,22 @@
 
 #include "PhysicsWorld.h"
 #include "FW_FileSystem.h"
+#include "PhysicsSystem.h"
+#include "CameraSystem.h"
+#include <FW_RenderSystem.h>
 
 LevelState::LevelState(FW_EntityManager& anEntityManager, PhysicsWorld& aPhysicsWorld)
 	: myEntityManager(anEntityManager)
 	, myPhysicsWorld(aPhysicsWorld)
 {
+	myEntityManager.RegisterComponent<PhysicsComponent>();
+	myEntityManager.RegisterComponent<PlayerComponent>();
+	myEntityManager.RegisterComponent<GoalComponent>();
+	myEntityManager.RegisterComponent<CameraControllerComponent>();
+
 	FW_MessageQueue& messageQueue = myEntityManager.GetMessageQueue();
+	messageQueue.RegisterMessageType<CollisionMessage>();
+
 	messageQueue.SubscribeToMessage<FW_PreEntityRemovedMessage>(std::bind(&LevelState::OnPreEntityRemoved, this, std::placeholders::_1));
 	messageQueue.SubscribeToMessage<CollisionMessage>(std::bind(&LevelState::OnCollision, this, std::placeholders::_1));
 
@@ -21,6 +31,10 @@ LevelState::LevelState(FW_EntityManager& anEntityManager, PhysicsWorld& aPhysics
 
 FW_StateStack::State::UpdateResult LevelState::OnUpdate()
 {
+	PhysicSystem::Run(myEntityManager, myPhysicsWorld);
+	CameraSystem::Run(myEntityManager);
+	FW_RenderSystem::Run(myEntityManager);
+
 	return FW_StateStack::State::KEEP_STATE;
 }
 
@@ -297,6 +311,7 @@ FW_EntityID LevelState::CreatePlayer()
 	physics.myObject->myEntityID = player;
 
 	myEntityManager.AddComponent<PlayerComponent>(player);
+	myEntityManager.AddComponent<CameraControllerComponent>(player);
 
 	return player;
 }
