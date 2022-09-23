@@ -133,6 +133,7 @@
     <ClInclude Include="PhysicsWorld.h" />
     <ClInclude Include="Spareparty.h" />
     <ClInclude Include="SparepartyComponents.h" />
+    <ClInclude Include="Spareparty_TODO.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="ChainBuilder.cpp" />

@@ -7,6 +7,8 @@
 #include "SparepartyComponents.h"
 
 class FW_EntityManager;
+class FW_XMLParser;
+
 class PhysicsWorld;
 
 class LevelState : public FW_StateStack::State
@@ -31,11 +33,15 @@ private:
 		};
 
 		FW_GrowingArray<TileData> myTiles;
+
+		FW_String myPlayerTexturePath;
 	};
 
 	struct LevelInformation
 	{
 		Tilesheet myTileSheet;
+		Vector2f mySpawnPosition;
+
 		FW_String myLevelName;
 		FW_String myNextLevelName;
 	};
@@ -44,9 +50,15 @@ private:
 	void OnCollision(const CollisionMessage& aMessage);
 
 	void LoadTiledLevel(const char* aLevelName);
+	void LoadMapProperties(FW_XMLParser& aParser);
+	void LoadMapTileSheets(FW_XMLParser& aParser);
+	void LoadMapLayers(FW_XMLParser& aParser);
 	void LoadTileSheet(const char* aFilePath, int aFirstTileID);
 
 	FW_EntityID CreateTile(const Vector2f& aPosition, const Tilesheet::TileData& someTileData);
+	FW_EntityID CreatePlayer();
+
+	FW_EntityID myPlayerEntity;
 
 	FW_EntityManager& myEntityManager;
 	PhysicsWorld& myPhysicsWorld;

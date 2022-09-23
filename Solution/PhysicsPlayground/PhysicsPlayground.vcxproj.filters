@@ -14,6 +14,7 @@
     <ClInclude Include="PhysicsSystem.h" />
     <ClInclude Include="SparepartyComponents.h" />
     <ClInclude Include="LevelState.h" />
+    <ClInclude Include="Spareparty_TODO.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="PhysicsPlayground.cpp" />

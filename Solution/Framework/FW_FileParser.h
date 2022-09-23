@@ -19,7 +19,10 @@ public:
 	float GetFloat(const FW_String& aWord) const;
 	int GetInt(const FW_String& aWord) const;
 
+	const FW_String& GetFilePath() const { return myFilePath; }
+
 private:
 	FILE* myFile;
+	FW_String myFilePath;
 };
 

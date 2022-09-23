@@ -4,7 +4,6 @@
 // Gameplay
 //
 // Soft camera: Only move the camera when the entity it follows starts getting close to the edge of the screen, and make the camera move towards the entity rather than just snapping to a position
-// Clean up the creation of the Player-entity (the IsSpawnPoint-property of tiles)
 // Expose all the parameters related to player movement to data and do a tweaking-pass
 // Add Saw-hazard
 // Create a couple of """real""" levels and make sure that movement-tuning feels atleast okay

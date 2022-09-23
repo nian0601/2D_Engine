@@ -55,10 +55,8 @@ void LevelState::OnCollision(const CollisionMessage& aMessage)
 				float speed = Length(physics->myObject->myPreviousVelocity);
 				if (speed > speedLimit)
 				{
-					myEntityManager.QueueRemovalAllEntities();
-					myEntityManager.FlushEntityRemovals();
-	
-					LoadTiledLevel(myCurrentLevelInformation.myLevelName.GetBuffer());
+					myEntityManager.QueueEntityRemoval(myPlayerEntity);
+					myPlayerEntity = CreatePlayer();
 				}
 			}
 		}
@@ -78,90 +76,100 @@ void LevelState::LoadTiledLevel(const char* aLevelName)
 
 	if (parser.BeginElement("map"))
 	{
-		int width = parser.GetIntAttribute("width");
-		int height = parser.GetIntAttribute("height");
+		LoadMapProperties(parser);
+		LoadMapTileSheets(parser);
+		LoadMapLayers(parser);
 
-		FW_String tilesetSource;
-		int firstGID = 0;
-		
-		if (parser.BeginElement("properties"))
+		parser.EndElement();
+	}
+
+	myPlayerEntity = CreatePlayer();
+}
+
+void LevelState::LoadMapProperties(FW_XMLParser& aParser)
+{
+	FW_PROFILE_FUNCTION();
+
+	if (aParser.BeginElement("properties"))
+	{
+		while (aParser.BeginElement("property"))
 		{
-			while (parser.BeginElement("property"))
-			{
-				FW_String propertyName = parser.GetStringAttribute("name");
-				if (propertyName == "next_level")
-					myCurrentLevelInformation.myNextLevelName = parser.GetStringAttribute("value");
+			FW_String propertyName = aParser.GetStringAttribute("name");
+			if (propertyName == "next_level")
+				myCurrentLevelInformation.myNextLevelName = aParser.GetStringAttribute("value");
 
-				parser.EndElement();
-			}
-			parser.EndElement();
+			aParser.EndElement();
 		}
+		aParser.EndElement();
+	}
+}
 
+void LevelState::LoadMapTileSheets(FW_XMLParser& aParser)
+{
+	FW_PROFILE_FUNCTION();
+
+	while (aParser.BeginElement("tileset"))
+	{
+		FW_String tilesetPath;
+		FW_FileSystem::RemoveFileName(aParser.GetFilePath(), tilesetPath);
+
+		FW_String tilesetSource = tilesetPath + aParser.GetStringAttribute("source");
+
+		int firstGID = aParser.GetIntAttribute("firstgid");
+
+		LoadTileSheet(tilesetSource.GetBuffer(), firstGID);
+
+		aParser.EndElement();
+	}
+}
+
+void LevelState::LoadMapLayers(FW_XMLParser& aParser)
+{
+	FW_PROFILE_FUNCTION();
+
+	while (aParser.BeginElement("layer"))
+	{
+		if (aParser.BeginElement("data"))
 		{
-			FW_PROFILE_SCOPE("Tileset Loading");
-
-			while (parser.BeginElement("tileset"))
+			while (aParser.BeginElement("chunk"))
 			{
-				FW_String tilesetPath;
-				FW_FileSystem::RemoveFileName(levelPath, tilesetPath);
+				int startX = aParser.GetIntAttribute("x");
+				int startY = aParser.GetIntAttribute("y");
 
-				tilesetSource = parser.GetStringAttribute("source");
-				tilesetSource = tilesetPath + parser.GetStringAttribute("source");
+				int chunkWidth = aParser.GetIntAttribute("width");
+				int chunkHeight = aParser.GetIntAttribute("height");
 
-				firstGID = parser.GetIntAttribute("firstgid");
-
-				LoadTileSheet(tilesetSource.GetBuffer(), firstGID);
-
-				parser.EndElement();
-			}
-		}
-
-		while (parser.BeginElement("layer"))
-		{
-			if (parser.BeginElement("data"))
-			{
-				while (parser.BeginElement("chunk"))
+				FW_GrowingArray<int> tileIDs;
+				for (int y = 0; y < chunkHeight; ++y)
 				{
-					int startX = parser.GetIntAttribute("x");
-					int startY = parser.GetIntAttribute("y");
+					aParser.GetRawDataAsInt(tileIDs, ",");
 
-					int chunkWidth = parser.GetIntAttribute("width");
-					int chunkHeight = parser.GetIntAttribute("height");
-
-					FW_GrowingArray<int> tileIDs;
-					for (int y = 0; y < chunkHeight; ++y)
+					for (int x = 0; x < tileIDs.Count(); ++x)
 					{
-						parser.GetRawDataAsInt(tileIDs, ",");
-
-						for(int x = 0; x < tileIDs.Count(); ++x)
+						if (tileIDs[x] != 0)
 						{
-							if (tileIDs[x] != 0)
+							for (Tilesheet::TileData& tile : myCurrentLevelInformation.myTileSheet.myTiles)
 							{
-								for (Tilesheet::TileData& tile : myCurrentLevelInformation.myTileSheet.myTiles)
+								if (tile.myID == tileIDs[x])
 								{
-									if (tile.myID == tileIDs[x])
-									{
-										Vector2f position;
-										position.x = (startX + x) * 64.f;
-										position.y = (startY + y) * 64.f;
+									Vector2f position;
+									position.x = (startX + x) * 64.f;
+									position.y = (startY + y) * 64.f;
 
-										CreateTile(position, tile);
-									}
+									CreateTile(position, tile);
 								}
 							}
 						}
 					}
-
-					parser.EndElement();
 				}
 
-				parser.EndElement();
+				aParser.EndElement();
 			}
 
-			parser.EndElement();
+			aParser.EndElement();
 		}
 
-		parser.EndElement();
+		aParser.EndElement();
 	}
 }
 
@@ -214,6 +222,10 @@ void LevelState::LoadTileSheet(const char* aFilePath, int aFirstTileID)
 				tile.myWidth = parser.GetIntAttribute("width");
 				tile.myHeight = parser.GetIntAttribute("height");
 				tile.myTexturePath = tileBasePath + parser.GetStringAttribute("source");
+
+				if (tile.myIsSpawnPoint)
+					myCurrentLevelInformation.myTileSheet.myPlayerTexturePath = tile.myTexturePath;
+
 				parser.EndElement();
 			}
 
@@ -226,6 +238,12 @@ void LevelState::LoadTileSheet(const char* aFilePath, int aFirstTileID)
 
 FW_EntityID LevelState::CreateTile(const Vector2f& aPosition, const Tilesheet::TileData& someTileData)
 {
+	if (someTileData.myIsSpawnPoint)
+	{
+		myCurrentLevelInformation.mySpawnPosition = aPosition;
+		return InvalidEntity;
+	}
+
 	FW_EntityID tile = myEntityManager.CreateEmptyEntity();
 	RenderComponent& render = myEntityManager.AddComponent<RenderComponent>(tile);
 	render.myTextureFileName = someTileData.myTexturePath;
@@ -237,10 +255,7 @@ FW_EntityID LevelState::CreateTile(const Vector2f& aPosition, const Tilesheet::T
 	translation.myPosition = aPosition;
 
 	PhysicsComponent& physics = myEntityManager.AddComponent<PhysicsComponent>(tile);
-	if (someTileData.myIsSpawnPoint) // This essentially means 'IsPlayer' atm, but the player should probably be created separately from this later
-		physics.myObject = new PhysicsObject(new CircleShape(render.mySpriteSize.x * 0.5f));
-	else
-		physics.myObject = new PhysicsObject(new AABBShape(Vector2f(64.f, 64.f)));
+	physics.myObject = new PhysicsObject(new AABBShape(Vector2f(64.f, 64.f)));
 
 	physics.myObject->MakeStatic();
 	physics.myObject->SetPosition(aPosition);
@@ -253,16 +268,35 @@ FW_EntityID LevelState::CreateTile(const Vector2f& aPosition, const Tilesheet::T
 		myEntityManager.AddComponent<GoalComponent>(tile);
 	}
 
-	if (someTileData.myIsSpawnPoint)
-	{
-		physics.myObject->myRestitution = 0.f;
-		physics.myObject->SetDensity(25.f);
-		physics.myObject->SetInertia(0.f);
-
-		myEntityManager.AddComponent<PlayerComponent>(tile);
-	}
-
 	myPhysicsWorld.AddObject(physics.myObject);
 
 	return tile;
+}
+
+FW_EntityID LevelState::CreatePlayer()
+{
+	FW_EntityID player = myEntityManager.CreateEmptyEntity();
+	RenderComponent& render = myEntityManager.AddComponent<RenderComponent>(player);
+	render.myTextureFileName = myCurrentLevelInformation.myTileSheet.myPlayerTexturePath;
+	render.myTexture = FW_Renderer::GetTexture(render.myTextureFileName.GetBuffer());;
+	render.mySpriteSize = render.myTexture.mySize;
+	render.myTextureRect = MakeRect<int>(0, 0, render.myTexture.mySize.x, render.myTexture.mySize.y);
+
+	TranslationComponent& translation = myEntityManager.AddComponent<TranslationComponent>(player);
+	translation.myPosition = myCurrentLevelInformation.mySpawnPosition;
+
+	PhysicsComponent& physics = myEntityManager.AddComponent<PhysicsComponent>(player);
+	physics.myObject = new PhysicsObject(new CircleShape(render.mySpriteSize.x * 0.5f));
+	myPhysicsWorld.AddObject(physics.myObject);
+
+	physics.myObject->SetPosition(translation.myPosition);
+	physics.myObject->myRestitution = 0.f;
+	physics.myObject->SetDensity(25.f);
+	physics.myObject->SetInertia(0.f);
+	physics.myObject->myColor = 0x33AAAAAA;
+	physics.myObject->myEntityID = player;
+
+	myEntityManager.AddComponent<PlayerComponent>(player);
+
+	return player;
 }

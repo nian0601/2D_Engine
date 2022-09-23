@@ -16,6 +16,8 @@ public:
 
 	void GetRawDataAsInt(FW_GrowingArray<int>& aRawDataOut, const char* aSeperator);
 
+	const FW_String& GetFilePath() const { return myFileParser.GetFilePath(); }
+
 private:
 	FW_FileParser myFileParser;
 	FW_String myCurrentElement;

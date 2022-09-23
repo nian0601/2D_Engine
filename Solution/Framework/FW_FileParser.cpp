@@ -2,6 +2,7 @@
 #include "FW_FileSystem.h"
 
 FW_FileParser::FW_FileParser(const char* aFile)
+	: myFilePath(aFile)
 {
 	FW_String realFilePath;
 	FW_FileSystem::GetRealFilePath(aFile, realFilePath);
